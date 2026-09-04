@@ -300,9 +300,17 @@ bounded list of names — and the only such list is your **Students** tab. So:
 * a code from **anyone else in the world** cannot be resolved at all. Their name could be
   anything, so it says so rather than guessing.
 
-It is not a lookup — when a hand-in arrives, the result is already in the lab's tab. It is for
-the hand-in that **did not** arrive (they were offline, closed the tab, or could not sign in
-but still have their code), and for telling a real code from an invented one.
+It looks the code up first — every hand-in that arrived wrote its code into the lab's tab, so
+there is nothing to guess at. Only if it is not there does it start trying possibilities, which
+is the case it exists for: the hand-in that **did not** arrive (they were offline, closed the
+tab, or could not sign in but still have their code), and telling a real code from an invented
+one.
+
+> ⚠️ &nbsp;**A code is made from the name on the GOOGLE account**, not the name on your
+> Students tab. For a student imported from Classroom those are the same, so this never comes
+> up. But if you type a name in by hand — `Daniel` where Google says `Daniel Mompel Riera` —
+> a code that never reached the Sheet cannot be reconstructed. Once that student has handed in
+> once, the Google name is remembered and it works from then on.
 
 </details>
 
@@ -429,9 +437,11 @@ var LAB_COLS = [
   { h:'Code', w:126, align:'center', group:true, note:'The completion code from their best hand-in.' },
   { h:'Flags', w:230, note:'Anything worth a second look.' },
   { h:'Per station', w:460, note:'Their score at each station, and how many checks it took there.' },
-  { h:'School email', w:230, hide:true, note:'What ties this row to the student. Do not edit.' }
+  { h:'School email', w:230, hide:true, note:'What ties this row to the student. Do not edit.' },
+  { h:'Signed in as', w:200, hide:true, note:'The name on the Google account they signed in with. Their completion code is made from THIS name, not the one on the Students tab — which is why it is kept.' }
 ];
-var LAB_EMAIL = 15;        /* the column that ties a row to a person */
+var LAB_EMAIL = 15;
+var LAB_GNAME = 16;        /* the column that ties a row to a person */
 
 /* ---- Signing in ----------------------------------------------------------
    The labs are public web pages: anyone in the world can open one, work through it and
@@ -530,6 +540,7 @@ function doPost(e) {
       var seen = Number(sh.getRange(r, 10).getValue()) || 0;
 
       sh.getRange(r, 1, 1, 2).setValues([[student.name, student.cls]]);
+      sh.getRange(r, LAB_GNAME).setValue(who.name || '');
       sh.getRange(r, 10, 1, 2).setValues([[seen + 1, new Date()]]);
       if (beaten) {
         sh.getRange(r, 3, 1, 7).setValues([[
@@ -1071,7 +1082,7 @@ function _styleSetup() {
     ['', ''],
     ['Web app URL', url],
     ['', ''],
-    ['Buttons', 'tick one — it runs, then unticks itself'],
+    ['Buttons', 'tick one. It unticks itself straight away and gets on with the job — watch the line that appears to the right of it, which stays until you use that button again.'],
     ['', ''],
     ['Import students from Classroom', 'on the 🧪 Biology Labs menu (it opens a window, so it cannot be a checkbox)'],
     ['', ''],
@@ -1091,6 +1102,7 @@ function _styleSetup() {
   sh.getRange(14, 1).setFontSize(13);
   sh.getRange(1, 1, lines.length, 2).setVerticalAlignment('middle').setWrap(true);
   sh.setColumnWidth(1, 260); sh.setColumnWidth(2, 720); sh.setColumnWidth(3, 60);
+  sh.setColumnWidth(4, 430);
   for (var r = 1; r <= lines.length; r++) sh.setRowHeight(r, r === 1 ? 34 : 24);
 
   /* the buttons */
@@ -1118,19 +1130,45 @@ function _installButtons() {
 }
 
 function onButtonTicked(e) {
+  if (!e || !e.range) return;
+  var sh = e.range.getSheet();
+  if (sh.getName() !== T_SETUP || e.range.getColumn() !== 3) return;
+  if (e.range.getValue() !== true) return;
+  var row = e.range.getRow();
+
+  /* The box unticks itself the moment you tick it, and some of these take a while. Without
+     something that STAYS on the screen you cannot tell the difference between "it is working"
+     and "nothing happened" — a toast is gone in a few seconds, and you may not be looking. So
+     the message is written into the sheet beside the button and left there. */
+  var started = new Date();
+  _btnSays(row, '⏳  Working… started ' + _hhmm(started) + '. Please wait — do not tick again.');
+  e.range.setValue(false);
+  SpreadsheetApp.flush();
+
   try {
-    if (!e || !e.range) return;
-    var sh = e.range.getSheet();
-    if (sh.getName() !== T_SETUP || e.range.getColumn() !== 3) return;
-    if (e.range.getValue() !== true) return;
-    var row = e.range.getRow();
-    e.range.setValue(false);
-    if (row === BTN_ROW.refresh) refreshDashboard();
-    else if (row === BTN_ROW.restyle) setup();
-    else if (row === BTN_ROW.code) checkCode();
+    var did = '';
+    if (row === BTN_ROW.refresh) { refreshDashboard(); did = 'Progress refreshed'; }
+    else if (row === BTN_ROW.restyle) { setup(); did = 'Tidied up — every tab rebuilt and reformatted'; }
+    else if (row === BTN_ROW.code) { checkCode(); did = 'Code checked — the answer is in the cell below'; }
+    else { _btnSays(row, ''); return; }
+    var secs = Math.round((new Date() - started) / 1000);
+    _btnSays(row, '✅  ' + did + ' at ' + _hhmm(new Date()) + ' (took ' + secs + 's)');
   } catch (err) {
-    SpreadsheetApp.getActive().toast('That button failed: ' + err, 'Biology Labs', 10);
+    _btnSays(row, '❌  That did not work: ' + err);
+    SpreadsheetApp.getActive().toast('That button failed: ' + err, 'Biology Labs', 30);
   }
+}
+
+function _hhmm(d) {
+  return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+}
+
+/* The line beside a button. It stays until that button is used again. */
+function _btnSays(row, text) {
+  var sh = _sheet(T_SETUP);
+  sh.getRange(row, 4).setValue(text)
+    .setFontColor(text.indexOf('❌') === 0 ? '#A3342A' : (text.indexOf('⏳') === 0 ? '#7A5B00' : '#265C33'))
+    .setFontWeight('bold').setVerticalAlignment('middle').setWrap(false);
 }
 
 function _styleStudents() {
@@ -1406,11 +1444,41 @@ function checkCode() {
   if (!/^[A-Z]{2}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
     return say('Paste a completion code into the cell above, then tick the box. They look like DL-3CL9-Q3MP.');
   }
+  /* First, simply look for it. Every hand-in that arrived wrote its code into the lab's tab,
+     so there is no need to guess at one that is already sitting there. */
+  for (var i = 0; i < LABS.length; i++) {
+    var tab = _ss().getSheetByName(LABS[i].name);
+    if (!tab || tab.getLastRow() < 2) continue;
+    var have = tab.getRange(2, 1, tab.getLastRow() - 1, LAB_COLS.length).getValues();
+    for (var j = 0; j < have.length; j++) {
+      if (String(have[j][11] || '').trim().toUpperCase() !== code) continue;
+      var p = have[j][4] === '' ? '' : ' (' + Math.round(1000 * have[j][4]) / 10 + '%)';
+      return say(have[j][0] + ' · ' + have[j][1] + ' · ' + LABS[i].name + ' · ' +
+                 have[j][2] + '/' + have[j][3] + p + ' · ' + have[j][5] +
+                 '.  Already in the ' + LABS[i].name + ' tab, row ' + (j + 2) + '.');
+    }
+  }
+
   var roster = _sheet(T_STUDENTS);
   if (roster.getLastRow() < 2) {
     return say('Import your classes first — a code can only be matched against your own students.');
   }
   var people = roster.getRange(2, 1, roster.getLastRow() - 1, 2).getValues();
+
+  /* Not in any tab, so it is a hand-in that never arrived. Now it has to be guessed at, and
+     the guess is over names. A code is made from the name on the GOOGLE account, which for an
+     imported student is the same as the one on the Students tab — but not for a name typed in
+     by hand. So any Google name already seen on a hand-in is tried as well. */
+  var seen = {};
+  LABS.forEach(function (l) {
+    var t = _ss().getSheetByName(l.name);
+    if (!t || t.getLastRow() < 2) return;
+    t.getRange(2, LAB_GNAME, t.getLastRow() - 1, 1).getValues().forEach(function (row) {
+      var g = String(row[0] || '').trim();
+      if (g) seen[g.toLowerCase()] = g;
+    });
+  });
+  Object.keys(seen).forEach(function (k) { people.push([seen[k], '']); });
 
   /* Signed in, the page sends no class at all; signed out, it sends the one they picked.
      Both are tried, so a code made either way is found. */
@@ -1434,9 +1502,14 @@ function checkCode() {
       }
     }
   }
-  say('Not one of your students. Either they are not on the Students tab, their name is spelt ' +
-      'differently there from the way Google gives it, or the code was invented. Anyone in the ' +
-      'world can use the labs, and nothing about them is recorded — so their code cannot be read here.');
+  say('Could not read that code. Either it was invented, or it belongs to somebody who is not ' +
+      'one of your students — anyone in the world may use the labs and nothing about them is ' +
+      'recorded, so their code cannot be read here. One more possibility: a code is made from ' +
+      'the name on the GOOGLE account that signed in. If a name was typed into the Students tab ' +
+      'by hand and it is shorter or spelt differently from the Google one — “Daniel” against ' +
+      '“Daniel Mompel Riera” — the code will not match until that student has handed in once, ' +
+      'after which the Google name is remembered. Importing from Classroom avoids this: the ' +
+      'names come from the same Google accounts.');
 }
 
 /* Whether that student's hand-in actually arrived, so a recovered code is not entered twice. */

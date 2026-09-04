@@ -291,16 +291,57 @@ ok &= run('it says whether the hand-in actually arrived', () => {
 });
 ok &= run("a stranger's code cannot be read, and it says why", () => {
   const answer = askAbout(_code('digestion-lab', 'Someone In Peru', '', '113/113'));
-  if (!/Not one of your students/.test(answer)) throw new Error(answer);
+  if (!/Could not read that code/.test(answer)) throw new Error(answer);
 });
 ok &= run('an invented code is refused', () => {
-  if (!/Not one of your students/.test(askAbout('DL-AAAA-AAAA'))) throw new Error('accepted a made-up code');
+  if (!/Could not read that code/.test(askAbout('DL-AAAA-AAAA'))) throw new Error('accepted a made-up code');
 });
 ok &= run('nonsense in the cell asks for a code rather than failing', () => {
   if (!/Paste a completion code/.test(askAbout('hello'))) throw new Error('should have asked for a code');
 });
+ok &= run('a code already in a lab tab is looked up, not guessed at', () => {
+  /* the exact case Daniel hit: the Students tab says "Daniel", Google said "Daniel Mompel
+     Riera", so the code can never be reconstructed from the roster name — but it is sitting
+     in the Code column of his row, and that is where it is found. */
+  const sh = ss.getSheetByName('Digestion');
+  const code = _code('digestion-lab', 'Ana Lee Full Name From Google', '', '113/113');
+  sh.getRange(2, 12).setValue(code);
+  const answer = askAbout(code);
+  if (!/Ana Lee/.test(answer)) throw new Error('did not find the row it is written on: ' + answer);
+  if (!/Already in the Digestion tab, row 2/.test(answer)) throw new Error(answer);
+});
+ok &= run('a Google name seen on a hand-in is remembered and tried', () => {
+  const sh = ss.getSheetByName('Digestion');
+  sh.getRange(3, LAB_GNAME).setValue('Bo Kim As Google Spells It');
+  sh.getRange(3, 12).setValue('');                       /* so it cannot just be looked up */
+  const answer = askAbout(_code('digestion-lab', 'Bo Kim As Google Spells It', '', '77/113'));
+  if (!/Bo Kim As Google Spells It/.test(answer)) throw new Error(answer);
+  if (!/77\/113/.test(answer)) throw new Error(answer);
+});
 ok &= run('the code button is wired to something that exists', () => {
   onButtonTicked({ range: setupSheet().getRange(BTN_ROW.code, 3) });
+});
+ok &= run('every button leaves a message that stays on the sheet', () => {
+  Object.keys(BTN_ROW).forEach(k => {
+    const row = BTN_ROW[k];
+    const box = setupSheet().getRange(row, 3);
+    box.setValue(true);
+    onButtonTicked({ range: box });
+    if (box.getValue() !== false) throw new Error(k + ': the box did not untick itself');
+    const said = String(setupSheet().getRange(row, 4).getValue());
+    if (!/^[✅❌]/.test(said)) throw new Error(k + ' said nothing afterwards: "' + said + '"');
+    if (/^❌/.test(said)) throw new Error(k + ' failed: ' + said);
+  });
+});
+ok &= run('a button that throws says so instead of going quiet', () => {
+  const real = refreshDashboard;
+  refreshDashboard = () => { throw new Error('pretend failure'); };
+  const box = setupSheet().getRange(BTN_ROW.refresh, 3);
+  box.setValue(true);
+  onButtonTicked({ range: box });
+  refreshDashboard = real;
+  const said = String(setupSheet().getRange(BTN_ROW.refresh, 4).getValue());
+  if (!/^❌.*pretend failure/.test(said)) throw new Error('a failure went unreported: "' + said + '"');
 });
 
 console.log('— and afterwards —');
