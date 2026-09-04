@@ -62,7 +62,13 @@ const rim  = new THREE.DirectionalLight(0xFFD9A8, 0.55); rim.position.set(0.6, -
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = 0.07;
-controls.enablePan = false; controls.minDistance = 1.1; controls.maxDistance = 5.5;
+/* Panning was off, so zooming in on a phone left you stuck looking at the middle of the
+   body with the head and the legs out of reach. Two fingers now move the view as well as
+   zoom it; one finger still turns the body. The target is kept inside a box around the
+   specimen (see the loop at the bottom) so nobody can drag themselves into empty space. */
+controls.enablePan = true; controls.screenSpacePanning = true;
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+controls.minDistance = 1.1; controls.maxDistance = 5.5;
 controls.autoRotate = true; controls.autoRotateSpeed = 0.55;
 
 function resize() {
@@ -277,13 +283,15 @@ renderer.domElement.addEventListener('click', ev => {
 
 /* ---------------- the idle tour ---------------- */
 const TOURABLE = T.filter(t => t.sys && t.sys !== 'drugs');
-let tour = null, resumeT = null, ti = 0;
+let tour = null, resumeT = null, ti = 0, paused = false;
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* Long enough to read the lab name and the topic under it without hurrying. */
+const TOUR_MS = 5800;
 
 function startTour() {
-  if (still || tour || !organs.length) return;
+  if (still || tour || !organs.length || paused) return;
   const step = () => { focusSystem(TOURABLE[ti % TOURABLE.length]); ti++; };
-  step(); tour = setInterval(step, 3200);
+  step(); tour = setInterval(step, TOUR_MS);
 }
 function stopTour(wait) {
   clearInterval(tour); tour = null; clearTimeout(resumeT);
@@ -296,6 +304,38 @@ function stopTour(wait) {
 document.querySelectorAll('.hero,.q__btn').forEach(el =>
   el.addEventListener('mouseenter', () => stopTour(20000)));
 
+/* Back to the whole body. With panning switched on you can wander off, and on a phone
+   there is no obvious way back — this is it. */
+const homeBtn = document.getElementById('homeBtn');
+if (homeBtn) homeBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  controls.target.set(0, 0, 0);
+  camera.position.set(0, 0.12, 3.15);
+  controls.update();
+});
+
+/* Pause and play, because the only other way to stop it is to keep touching the screen. */
+const tourBtn = document.getElementById('tourBtn');
+if (tourBtn) {
+  if (still) tourBtn.hidden = true;
+  const paintTourBtn = () => {
+    tourBtn.textContent = paused ? '\u25B6' : '\u23F8';
+    const what = paused ? 'Play the tour' : 'Pause the tour';
+    tourBtn.title = what;
+    tourBtn.setAttribute('aria-label', what);
+    tourBtn.setAttribute('aria-pressed', String(paused));
+  };
+  tourBtn.addEventListener('pointerdown', e => e.stopPropagation());
+  tourBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    paused = !paused;
+    if (paused) { clearInterval(tour); tour = null; clearTimeout(resumeT); }
+    else startTour();
+    paintTourBtn();
+  });
+  paintTourBtn();
+}
+
 /* ---------------- toast ---------------- */
 let timer;
 function toast(msg) {
@@ -305,4 +345,11 @@ function toast(msg) {
 
 /* ---------------- draw ---------------- */
 resize();
-renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+/* How far the view may wander from the body. Enough to put the head or the feet in the
+   middle of the screen when zoomed in, not enough to lose the specimen altogether. */
+const PAN = new THREE.Vector3(0.55, 1.05, 0.55);
+renderer.setAnimationLoop(() => {
+  controls.target.clamp(PAN.clone().negate(), PAN);
+  controls.update();
+  renderer.render(scene, camera);
+});
