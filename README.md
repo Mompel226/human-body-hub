@@ -169,6 +169,27 @@ window, which a spreadsheet button is not allowed to do.
 </details>
 
 <details>
+<summary><b>Reading a completion code</b></summary>
+
+Every hand-in shows the student a **completion code** — `DL-3CL9-Q3MP`. It is a checksum of
+their name, class, score and the lab, and **nothing about it is stored anywhere**. Paste one
+into the *Check a completion code* cell on the **Setup** tab and tick the box beside it.
+
+Because nothing is stored, the only way to read a code is to try the possibilities against a
+bounded list of names — and the only such list is your **Students** tab. So:
+
+* a code from **one of your students** resolves to their name, their score, and whether their
+  hand-in actually arrived;
+* a code from **anyone else in the world** cannot be resolved at all. Their name could be
+  anything, so it says so rather than guessing.
+
+It is not a lookup — when a hand-in arrives, the result is already in the lab's tab. It is
+for the hand-in that **did not** arrive (they were offline, closed the tab, or could not sign
+in but still have their code), and for telling a real code from an invented one.
+
+</details>
+
+<details>
 <summary><b>Why “Who has access: Anyone” is safe</b></summary>
 
 It has to be *Anyone*, because the labs are ordinary web pages with no login: the student's
@@ -274,17 +295,17 @@ var LAB_COLS = [
   { h:'Class', w:80, align:'center', note:'From the Students tab. Move somebody between classes there and it follows them into every lab.' },
   { h:'Score', w:76, align:'center', fmt:'0', group:true, note:'Their best score in this lab. Blank means they have not handed in yet.' },
   { h:'Out of', w:76, align:'center', fmt:'0', note:'How many questions the lab asked.' },
-  { h:'%', w:70, align:'center', fmt:'0%', note:'Their best score as a percentage.' },
+  { h:'%', w:78, align:'center', fmt:'0.0%', note:'Their best score as a percentage.' },
   { h:'Finished?', w:104, align:'center', list:['complete', 'progress'],
     note:'complete — every question right.\nprogress — handed in part way, to show the work so far.' },
   { h:'Checks', w:86, align:'center', fmt:'0', group:true, note:'How many times they pressed Check answer, in all. This is the evidence of the work.' },
-  { h:'Right first time', w:130, align:'center', fmt:'0', note:'How many questions they got right at the first attempt. Separates knowing it from working it out.' },
-  { h:'Working since', w:120, align:'center', note:'How long before their best hand-in they first checked anything.' },
+  { h:'Right first time', w:124, align:'center', fmt:'0', note:'How many questions they got right at the first attempt. Separates knowing it from working it out.' },
+  { h:'Working since', w:116, align:'center', note:'How long before their best hand-in they first checked anything.' },
   { h:'Hand-ins', w:90, align:'center', fmt:'0', group:true, note:'How many times they have handed this lab in. A second hand-in updates the row rather than adding one.' },
-  { h:'Last hand-in', w:150, fmt:'dd MMM, HH:mm', note:'When they last handed in — even if an earlier one scored higher.' },
-  { h:'Code', w:120, align:'center', group:true, note:'The completion code from their best hand-in.' },
-  { h:'Flags', w:190, wrap:true, note:'Anything worth a second look.' },
-  { h:'Per station', w:400, wrap:true, note:'Their score at each station, and how many checks it took there.' },
+  { h:'Last hand-in', w:132, fmt:'dd MMM, HH:mm', note:'When they last handed in — even if an earlier one scored higher.' },
+  { h:'Code', w:126, align:'center', group:true, note:'The completion code from their best hand-in.' },
+  { h:'Flags', w:230, note:'Anything worth a second look.' },
+  { h:'Per station', w:460, note:'Their score at each station, and how many checks it took there.' },
   { h:'School email', w:230, hide:true, note:'What ties this row to the student. Do not edit.' }
 ];
 var LAB_EMAIL = 15;        /* the column that ties a row to a person */
@@ -395,6 +416,7 @@ function doPost(e) {
         ]]);
         sh.getRange(r, 12, 1, 3).setValues([[d.code || '', flags.join('; '), _stations(d.stations)]]);
       }
+      _dressRows(sh, LAB_COLS, r, 1);       /* so a row written between tidy-ups still reads properly */
       SpreadsheetApp.flush();
       return _text(beaten ? 'recorded' : 'recorded (an earlier hand-in still scores higher)');
     } finally { lock.releaseLock(); }
@@ -852,13 +874,25 @@ function _dress2(sh, cols, opts) {
     });
   }
 
+  cols.forEach(function (c, i) { if (c.hide) sh.hideColumns(i + 1); });
+  _dressRows(sh, cols, 2, rows);
+  if (opts.tab) { try { sh.setTabColor(opts.tab); } catch (e) {} }
+  return rows;
+}
+
+/* The per-column look — number format, alignment, dropdowns — applied to a block of rows.
+   _dress2 uses it for the whole sheet; doPost uses it for the single row it has just
+   filled in. Without that, a row added after the last tidy-up carries no format at all,
+   and a percentage arrives as 0.008849557522 instead of 0.9%. */
+function _dressRows(sh, cols, from, rows) {
+  if (!rows || rows < 1) return;
+  sh.getRange(from, 1, rows, cols.length).setVerticalAlignment('middle').setFontColor('#26332A');
+  for (var r = from; r < from + rows; r++) sh.setRowHeight(r, 24);
   cols.forEach(function (c, i) {
-    if (c.hide) sh.hideColumns(i + 1);
-    if (!rows) return;
-    var col = sh.getRange(2, i + 1, rows, 1);
+    var col = sh.getRange(from, i + 1, rows, 1);
     if (c.fmt) col.setNumberFormat(c.fmt);
     if (c.align) col.setHorizontalAlignment(c.align);
-    if (c.wrap) col.setWrap(true);
+    col.setWrap(!!c.wrap);
     if (c.bold) col.setFontWeight('bold');
     if (c.list && c.list.length) {
       col.setDataValidation(SpreadsheetApp.newDataValidation()
@@ -868,8 +902,6 @@ function _dress2(sh, cols, opts) {
       col.setDataValidation(null);
     }
   });
-  if (opts.tab) { try { sh.setTabColor(opts.tab); } catch (e) {} }
-  return rows;
 }
 
 /* the classes actually in use, for the dropdowns */
@@ -890,7 +922,8 @@ function _classList() {
    runs, then unticks itself. These two constants are the rows those things are written
    on, and must match the `lines` array inside _styleSetup. */
 var URL_ROW = 12;
-var BTN_ROW = { refresh: 18, restyle: 19 };
+var BTN_ROW = { refresh: 18, restyle: 19, code: 21 };
+var CODE_ROW = 21;      /* paste a code in B21; the answer lands in B22 */
 
 function _styleSetup() {
   var sh = _sheet(T_SETUP);
@@ -922,6 +955,9 @@ function _styleSetup() {
     ["Refresh everyone's progress", ''],
     ['Tidy up — rebuild anything missing, re-apply the formatting', ''],
     ['', ''],
+    ['Check a completion code', 'paste a code here, then tick →   (it can only match one of your own students)'],
+    ['', ''],
+    ['', ''],
     ['If something looks wrong', '🧪 Biology Labs ▸ Check the set-up'],
     ['After editing the script', 'Deploy ▸ Manage deployments ▸ pencil ▸ Version: New version ▸ Deploy']
   ];
@@ -941,6 +977,10 @@ function _styleSetup() {
     sh.getRange(r, 1, 1, 3).setBackground('#EFF5F0');
   });
   sh.getRange(BTN_ROW.refresh, 1, 2, 1).setFontColor(INK);
+  sh.getRange(CODE_ROW, 1).setFontColor(INK);
+  sh.getRange(CODE_ROW, 2).setBackground('#FFFFFF').setFontColor('#8A8F8A').setFontStyle('italic')
+    .setBorder(true, true, true, true, false, false, '#C9A227', SpreadsheetApp.BorderStyle.SOLID);
+  sh.getRange(CODE_ROW + 1, 2).setFontColor('#3D7A54').setFontWeight('bold');
   sh.setHiddenGridlines(true);
 }
 
@@ -964,6 +1004,7 @@ function onButtonTicked(e) {
     e.range.setValue(false);
     if (row === BTN_ROW.refresh) refreshDashboard();
     else if (row === BTN_ROW.restyle) setup();
+    else if (row === BTN_ROW.code) checkCode();
   } catch (err) {
     SpreadsheetApp.getActive().toast('That button failed: ' + err, 'Biology Labs', 10);
   }
@@ -1218,6 +1259,77 @@ function _since(iso) {
 }
 /** Must stay identical to completionCode() in each lab's js/app.js. The lab's own id
     is part of the recipe, so a code from one lab cannot be pasted into another. */
+/* ============================================================
+   5b. Reading a completion code
+   ============================================================
+   Nothing about a code is written down anywhere. It is a checksum of the name, the class,
+   the score and the lab — so the only way to read one back is to try the possibilities and
+   see which one matches, and the only bounded list of names you have is your own Students
+   tab. That is the whole shape of this feature, and its limit:
+
+     · a code from one of YOUR students resolves to their name and their score;
+     · a code from anyone else in the world cannot be resolved at all — their name could be
+       anything — and it says so rather than guessing.
+
+   So it is not a lookup. It is for the hand-in that never arrived — the student was offline,
+   or closed the tab, or could not sign in — and for telling a real code from an invented one.
+   Their result is in the lab's tab already when the hand-in did arrive. */
+function checkCode() {
+  var sh = _sheet(T_SETUP);
+  var code = String(sh.getRange(CODE_ROW, 2).getValue() || '').trim().toUpperCase();
+  var out = sh.getRange(CODE_ROW + 1, 2);
+  var say = function (t) { out.setValue(t); SpreadsheetApp.getActive().toast(t, 'Completion code', 8); };
+
+  if (!/^[A-Z]{2}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+    return say('Paste a completion code into the cell above, then tick the box. They look like DL-3CL9-Q3MP.');
+  }
+  var roster = _sheet(T_STUDENTS);
+  if (roster.getLastRow() < 2) {
+    return say('Import your classes first — a code can only be matched against your own students.');
+  }
+  var people = roster.getRange(2, 1, roster.getLastRow() - 1, 2).getValues();
+
+  /* Signed in, the page sends no class at all; signed out, it sends the one they picked.
+     Both are tried, so a code made either way is found. */
+  for (var li = 0; li < LABS.length; li++) {
+    var lab = LABS[li];
+    if (!lab.questions) continue;                 /* a lab with no questions yet issues no codes */
+    for (var pi = 0; pi < people.length; pi++) {
+      var name = String(people[pi][0] || '').trim();
+      if (!name) continue;
+      var forms = ['', String(people[pi][1] || '').trim()];
+      for (var fi = 0; fi < forms.length; fi++) {
+        if (fi === 1 && forms[1] === forms[0]) continue;
+        for (var sc = 0; sc <= lab.questions; sc++) {
+          if (_code(lab.id, name, forms[fi], sc + '/' + lab.questions) !== code) continue;
+          var pct = Math.round(1000 * sc / lab.questions) / 10;
+          var where = _rowSaysWhat(lab, name);
+          return say(name + ' · ' + lab.name + ' · ' + sc + '/' + lab.questions +
+                     ' (' + pct + '%) · ' + (sc === lab.questions ? 'finished' : 'part way') +
+                     '.  ' + where);
+        }
+      }
+    }
+  }
+  say('Not one of your students. Either they are not on the Students tab, their name is spelt ' +
+      'differently there from the way Google gives it, or the code was invented. Anyone in the ' +
+      'world can use the labs, and nothing about them is recorded — so their code cannot be read here.');
+}
+
+/* Whether that student's hand-in actually arrived, so a recovered code is not entered twice. */
+function _rowSaysWhat(lab, name) {
+  var sh = _ss().getSheetByName(lab.name);
+  if (!sh || sh.getLastRow() < 2) return 'Nothing has been handed in for this lab yet.';
+  var rows = sh.getRange(2, 1, sh.getLastRow() - 1, LAB_COLS.length).getValues();
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i][0] || '').trim().toLowerCase() !== name.toLowerCase()) continue;
+    return (rows[i][2] === '' || rows[i][2] === null)
+      ? 'Their hand-in never arrived — this code is the only record of it.'
+      : 'Already in the ' + lab.name + ' tab: ' + rows[i][2] + '/' + rows[i][3] + '.';
+  }
+  return 'They have no row in the ' + lab.name + ' tab.';
+}
+
 function _code(labId, name, form, score) {
   var raw = String(name).trim().toLowerCase() + '|' + form + '|' + score + '|' + labId;
   var s1 = 0, s2 = 0;

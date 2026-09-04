@@ -267,6 +267,42 @@ ok &= run('a hand-in for a lab that does not exist is ignored', () => {
   if (!/unknown lab/.test(out)) throw new Error(out);
 });
 
+console.log('— reading a completion code —');
+const setupSheet = () => ss.getSheetByName('Setup');
+const askAbout = (code) => {
+  setupSheet().getRange(CODE_ROW, 2).setValue(code);
+  checkCode();
+  return String(setupSheet().getRange(CODE_ROW + 1, 2).getValue());
+};
+ok &= run("a student's own code resolves to their name and score", () => {
+  const answer = askAbout(_code('digestion-lab', 'Ana Lee', '', '113/113'));
+  if (!/Ana Lee/.test(answer)) throw new Error('did not name her: ' + answer);
+  if (!/113\/113/.test(answer)) throw new Error('did not give the score: ' + answer);
+  if (!/finished/.test(answer)) throw new Error('did not say it was complete: ' + answer);
+});
+ok &= run('a part-way code resolves too, and says so', () => {
+  const answer = askAbout(_code('digestion-lab', 'Bo Kim', '9A', '20/113'));
+  if (!/Bo Kim/.test(answer) || !/20\/113/.test(answer)) throw new Error(answer);
+  if (!/part way/.test(answer)) throw new Error('should say part way: ' + answer);
+});
+ok &= run('it says whether the hand-in actually arrived', () => {
+  const answer = askAbout(_code('digestion-lab', 'Ana Lee', '', '113/113'));
+  if (!/Already in the Digestion tab/.test(answer)) throw new Error(answer);
+});
+ok &= run("a stranger's code cannot be read, and it says why", () => {
+  const answer = askAbout(_code('digestion-lab', 'Someone In Peru', '', '113/113'));
+  if (!/Not one of your students/.test(answer)) throw new Error(answer);
+});
+ok &= run('an invented code is refused', () => {
+  if (!/Not one of your students/.test(askAbout('DL-AAAA-AAAA'))) throw new Error('accepted a made-up code');
+});
+ok &= run('nonsense in the cell asks for a code rather than failing', () => {
+  if (!/Paste a completion code/.test(askAbout('hello'))) throw new Error('should have asked for a code');
+});
+ok &= run('the code button is wired to something that exists', () => {
+  onButtonTicked({ range: setupSheet().getRange(BTN_ROW.code, 3) });
+});
+
 console.log('— and afterwards —');
 ok &= run('the dashboard shows the marks', () => {
   refreshDashboard();
