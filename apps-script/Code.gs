@@ -50,6 +50,28 @@ var LABS = [
 
 var T_SETUP = 'Setup', T_LABS = 'Labs', T_STUDENTS = 'Students', T_REJECTED = 'Rejected';
 
+/* A lab's tab, described once. Every student gets a row when they are imported; the
+   columns after Class stay empty until they hand in. */
+var LAB_COLS = [
+  { h:'Name', w:200, note:'From the Students tab. Everyone gets a row here when they are imported, whether they have handed in or not. To correct a name, correct it there.' },
+  { h:'Class', w:80, align:'center', note:'From the Students tab. Move somebody between classes there and it follows them into every lab.' },
+  { h:'Score', w:76, align:'center', fmt:'0', group:true, note:'Their best score in this lab. Blank means they have not handed in yet.' },
+  { h:'Out of', w:76, align:'center', fmt:'0', note:'How many questions the lab asked.' },
+  { h:'%', w:70, align:'center', fmt:'0%', note:'Their best score as a percentage.' },
+  { h:'Finished?', w:104, align:'center', list:['complete', 'progress'],
+    note:'complete — every question right.\nprogress — handed in part way, to show the work so far.' },
+  { h:'Checks', w:86, align:'center', fmt:'0', group:true, note:'How many times they pressed Check answer, in all. This is the evidence of the work.' },
+  { h:'Right first time', w:130, align:'center', fmt:'0', note:'How many questions they got right at the first attempt. Separates knowing it from working it out.' },
+  { h:'Working since', w:120, align:'center', note:'How long before their best hand-in they first checked anything.' },
+  { h:'Hand-ins', w:90, align:'center', fmt:'0', group:true, note:'How many times they have handed this lab in. A second hand-in updates the row rather than adding one.' },
+  { h:'Last hand-in', w:150, fmt:'dd MMM, HH:mm', note:'When they last handed in — even if an earlier one scored higher.' },
+  { h:'Code', w:120, align:'center', group:true, note:'The completion code from their best hand-in.' },
+  { h:'Flags', w:190, wrap:true, note:'Anything worth a second look.' },
+  { h:'Per station', w:400, wrap:true, note:'Their score at each station, and how many checks it took there.' },
+  { h:'School email', w:230, hide:true, note:'What ties this row to the student. Do not edit.' }
+];
+var LAB_EMAIL = 15;        /* the column that ties a row to a person */
+
 /* ---- Signing in ----------------------------------------------------------
    The labs are public web pages: anyone in the world can open one, work through it and
    press Hand in. That is the point — but their work must not land in your spreadsheet.
@@ -102,7 +124,6 @@ function doPost(e) {
     var student = _studentOf(who.email);
     if (!student) return _text('not recorded: not on this class list');
 
-    var name = student.name, form = student.cls;
     var score = Number(d.score) || 0, total = Number(d.total) || 0;
 
     /* the code was made in the page from what it showed, so it is checked against that */
@@ -113,7 +134,7 @@ function doPost(e) {
     if (score > total) wrong.push('score above the total');
     if (total < 0 || total > 1000) wrong.push('impossible total');
     if (wrong.length) {
-      _reject(lab, [new Date(), lab.id, name, form, score, total, d.code || '',
+      _reject(lab, [new Date(), lab.id, student.name, student.cls, score, total, d.code || '',
                     wrong.join('; '), JSON.stringify(d).slice(0, 2000)]);
       return _text('rejected: ' + wrong.join('; '));
     }
@@ -122,16 +143,34 @@ function doPost(e) {
     if (lab.questions && total !== lab.questions) flags.push('NOT ALL QUESTIONS');
     if (d.complete === false) flags.push('PROGRESS — not finished');
 
-    var sh = _labSheet(lab);
-    sh.appendRow([
-      new Date(), name, form,
-      score, total, total ? score / total : 0,
-      d.complete === false ? 'progress' : 'complete',
-      Number(d.checks) || '', Number(d.firstTime) || '', _since(d.from),
-      d.code || '', flags.join('; '), _stations(d.stations)
-    ]);
-    _tidyLastRow(sh);
-    return _text('recorded');
+    /* Their row is already waiting, put there when the class was imported. A hand-in fills
+       it in; a second hand-in updates it rather than adding another. The count and the date
+       always move, and everything else is replaced only when this attempt beat the last one,
+       so a worse re-run can never wipe out a better score.
+       A whole class can press Hand in within the same few seconds, so the read-then-write is
+       done one at a time. _rowFor only has to make a row for somebody who joined since. */
+    var lock = LockService.getScriptLock();
+    try { lock.waitLock(20000); } catch (e) { return _text('busy — please press Hand in again'); }
+    try {
+      var sh = _labSheet(lab);
+      var r = _rowFor(sh, who.email, student);
+      var best = Number(sh.getRange(r, 3).getValue());
+      var beaten = !(best > 0) || score > best;
+      var seen = Number(sh.getRange(r, 10).getValue()) || 0;
+
+      sh.getRange(r, 1, 1, 2).setValues([[student.name, student.cls]]);
+      sh.getRange(r, 10, 1, 2).setValues([[seen + 1, new Date()]]);
+      if (beaten) {
+        sh.getRange(r, 3, 1, 7).setValues([[
+          score, total, total ? score / total : 0,
+          d.complete === false ? 'progress' : 'complete',
+          Number(d.checks) || '', Number(d.firstTime) || '', _since(d.from)
+        ]]);
+        sh.getRange(r, 12, 1, 3).setValues([[d.code || '', flags.join('; '), _stations(d.stations)]]);
+      }
+      SpreadsheetApp.flush();
+      return _text(beaten ? 'recorded' : 'recorded (an earlier hand-in still scores higher)');
+    } finally { lock.releaseLock(); }
   } catch (err) {
     return _text('error: ' + err);
   }
@@ -327,6 +366,9 @@ function _upsertStudents(students, classCode, courseName, courseId) {
     sh.getRange(at, 1, add.length, 2).setValues(add.map(function (a) { return [a[0], a[1]]; }));
     sh.getRange(at, EMAIL_COL, add.length, 5).setValues(add.map(function (a) { return a.slice(2); }));
   }
+  /* Their names go into every lab straight away, so each tab reads as a class list with the
+     marks still to come, rather than filling up only as people hand in. */
+  if (add.length || moved) LABS.forEach(function (l) { _seedLab(l); });
   return { status: 'success', added: add.length, skipped: skipped, moved: moved };
 }
 
@@ -363,31 +405,43 @@ function createAssignmentFor(labId, courseId) {
 function pushGradesFor(labId, courseId, courseWorkId) {
   _needClassroom();
   var lab = _labById(labId);
-  var roster = {}, page = null;
+  if (!lab) throw new Error('Unknown lab: ' + labId);
+  var sh = _ss().getSheetByName(lab.name);
+  if (!sh || sh.getLastRow() < 2) throw new Error('Nothing in the ' + lab.name + ' tab yet.');
+
+  /* Match on school email — the same thing the hand-in was recorded against — and fall
+     back to the name only for anyone Classroom gives no email for. */
+  var byEmail = {}, byName = {}, page = null;
   do {
     var r = Classroom.Courses.Students.list(courseId, { pageSize: 100, pageToken: page });
-    (r.students || []).forEach(function (s) { roster[_tidy(s.profile.name.fullName)] = s.userId; });
+    (r.students || []).forEach(function (s) {
+      var em = String((s.profile || {}).emailAddress || '').toLowerCase();
+      if (em) byEmail[em] = s.userId;
+      byName[_tidy(s.profile.name.fullName)] = s.userId;
+    });
     page = r.nextPageToken;
   } while (page);
 
-  var rows = _labSheet(lab).getDataRange().getValues(), best = {};
-  for (var i = 1; i < rows.length; i++) {
-    var n = _tidy(rows[i][1]), sc = Number(rows[i][4]) || 0;
-    if (n && (!(n in best) || sc > best[n])) best[n] = sc;
-  }
-  var done = 0, missing = [];
-  Object.keys(best).forEach(function (n) {
-    var uid = roster[n];
-    if (!uid) { missing.push(n); return; }
+  var rows = sh.getRange(2, 1, sh.getLastRow() - 1, LAB_COLS.length).getValues();
+  var done = 0, missing = [], waiting = 0;
+  rows.forEach(function (row) {
+    var score = row[2];
+    if (score === '' || score === null) { waiting++; return; }   /* has not handed in yet */
+    var name = String(row[0] || ''), email = String(row[LAB_EMAIL - 1] || '').toLowerCase();
+    var uid = byEmail[email] || byName[_tidy(name)];
+    if (!uid) { missing.push(name); return; }
     var subs = Classroom.Courses.CourseWork.StudentSubmissions.list(courseId, courseWorkId, { userId: uid });
     var sub = (subs.studentSubmissions || [])[0];
-    if (!sub) { missing.push(n + ' (no submission)'); return; }
+    if (!sub) { missing.push(name + ' (no submission)'); return; }
     Classroom.Courses.CourseWork.StudentSubmissions.patch(
-      { assignedGrade: best[n], draftGrade: best[n] },
+      { assignedGrade: Number(score), draftGrade: Number(score) },
       courseId, courseWorkId, sub.id, { updateMask: 'assignedGrade,draftGrade' });
     done++;
   });
-  Logger.log('Graded ' + done + '. Not matched: ' + (missing.join(', ') || 'none'));
+  var said = 'Graded ' + done + '. Still to hand in: ' + waiting +
+             '. Not matched: ' + (missing.join(', ') || 'none');
+  Logger.log(said);
+  return said;
 }
 
 /* Tells you, in one box, which of the five set-up steps are done. */
@@ -437,7 +491,7 @@ function checkSetup() {
    spreadsheet built, dressed and up to date — there is nothing else to press. */
 function _buildAndStyle() {
   _sheet(T_SETUP); _sheet(T_LABS); _sheet(T_STUDENTS);
-  LABS.forEach(function (l) { if (l.questions) _labSheet(l); });   /* built labs get a tab now */
+  LABS.forEach(function (l) { _seedLab(l); });     /* every lab: a tab, and a row per student */
   var gone = _ss().getSheetByName('Summary');
   if (gone && gone.getLastRow() < 2) _ss().deleteSheet(gone);      /* the Students tab is the summary now */
   _installButtons();
@@ -712,29 +766,33 @@ function _styleStudents() {
 /* The dashboard: every student, every lab, best score so far. Written as values rather than
    formulas, so nothing shows #REF for a lab that has no tab yet — the column is simply empty
    until that lab is used. */
+/* The dashboard: every student, every lab, best score so far. Read straight out of each
+   lab's tab, which now holds one row per student — so a name is matched by email, not by
+   how it was typed. */
 function refreshDashboard() {
   var sh = _sheet(T_STUDENTS);
   var rows = Math.max(0, sh.getLastRow() - 1);
   if (!rows) { _styleStudents(); return; }
 
-  var names = sh.getRange(2, 1, rows, 1).getValues();
+  var EMAIL_COL = 3 + LABS.length + 2;
+  var emails = sh.getRange(2, EMAIL_COL, rows, 1).getValues();
   var rowOf = {};
-  names.forEach(function (r, i) { var k = _tidy(r[0]); if (k) rowOf[k] = i; });
+  emails.forEach(function (r, i) { var e = String(r[0] || '').toLowerCase(); if (e) rowOf[e] = i; });
 
   var L = LABS.length, first = 3;
-  var grid = names.map(function () { var a = []; for (var i = 0; i < L + 2; i++) a.push(''); return a; });
-  var unmatched = {};
+  var grid = emails.map(function () { var a = []; for (var i = 0; i < L + 2; i++) a.push(''); return a; });
 
   LABS.forEach(function (lab, c) {
     var tab = _ss().getSheetByName(lab.name);
     if (!tab || tab.getLastRow() < 2) return;
-    tab.getRange(2, 1, tab.getLastRow() - 1, 6).getValues().forEach(function (r) {
-      var k = _tidy(r[1]); if (!k) return;
-      var pc = Number(r[5]) || 0;
-      if (!(k in rowOf)) { unmatched[r[1]] = true; return; }
-      var i = rowOf[k];
-      if (grid[i][c] === '' || pc > grid[i][c]) grid[i][c] = pc;
-    });
+    var n = tab.getLastRow() - 1;
+    var pct = tab.getRange(2, 5, n, 1).getValues();
+    var mail = tab.getRange(2, LAB_EMAIL, n, 1).getValues();
+    for (var i = 0; i < n; i++) {
+      var e = String(mail[i][0] || '').toLowerCase();
+      if (!e || !(e in rowOf) || pct[i][0] === '') continue;
+      grid[rowOf[e]][c] = Number(pct[i][0]) || 0;
+    }
   });
 
   grid.forEach(function (row) {
@@ -746,13 +804,7 @@ function refreshDashboard() {
 
   sh.getRange(2, first, rows, L + 2).setValues(grid);
   _styleStudents();
-
-  var miss = Object.keys(unmatched);
-  SpreadsheetApp.getActive().toast(
-    'Progress updated for ' + rows + ' students.' +
-    (miss.length ? '  ' + miss.length + ' hand-in name(s) matched nobody: ' + miss.slice(0, 4).join(', ') +
-                   (miss.length > 4 ? '…' : '') + ' — check the spelling.' : ''),
-    'Biology Labs', miss.length ? 12 : 5);
+  SpreadsheetApp.getActive().toast('Progress updated for ' + rows + ' students.', 'Biology Labs', 5);
 }
 
 
@@ -769,53 +821,30 @@ function _styleLabs() {
 }
 
 function _styleLab(sh) {
-  var rows = _dress2(sh, [
-    { h:'When', w:150, fmt:'dd MMM, HH:mm', note:'When it was handed in.' },
-    { h:'Name', w:200, note:'As the student typed it. If this does not match the Students tab, the dashboard will say so.' },
-    { h:'Class', w:80, align:'center', note:'The class they chose when handing in.' },
-    { h:'Score', w:76, align:'center', fmt:'0', group:true, note:'How many they got right.' },
-    { h:'Out of', w:76, align:'center', fmt:'0', note:'How many questions the lab asked.' },
-    { h:'%', w:70, align:'center', fmt:'0%', note:'Score out of the total.' },
-    { h:'Finished?', w:104, align:'center', list:['complete', 'progress'],
-      note:'complete — every question right.\nprogress — handed in part way, to show the work so far.' },
-    { h:'Checks', w:86, align:'center', fmt:'0', group:true, note:'How many times they pressed Check answer, in all. This is the evidence of grinding.' },
-    { h:'Right first time', w:130, align:'center', fmt:'0', note:'How many questions they got right at the first attempt. Separates knowing it from working it out.' },
-    { h:'Working since', w:120, align:'center', note:'How long before handing in they first checked anything.' },
-    { h:'Code', w:120, align:'center', group:true,
-      note:'The completion code the student saw. Anything whose code does not recompute goes to the Rejected tab instead of here.' },
-    { h:'Flags', w:200, wrap:true, note:'Anything worth a second look.' },
-    { h:'Per station', w:420, wrap:true, note:'Their score at each station, and how many checks it took there.' }
-  ], { freezeCols: 2, tab:'#3D7A54' });
-
+  var rows = _dress2(sh, LAB_COLS, { freezeCols: 2, tab:'#3D7A54' });
   if (!rows) return;
   sh.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule()
       .setGradientMinpointWithValue(LOW, SpreadsheetApp.InterpolationType.NUMBER, '0')
       .setGradientMidpointWithValue(MID, SpreadsheetApp.InterpolationType.NUMBER, '0.6')
       .setGradientMaxpointWithValue(HIGH, SpreadsheetApp.InterpolationType.NUMBER, '1')
-      .setRanges([sh.getRange(2, 6, rows, 1)]).build(),
+      .setRanges([sh.getRange(2, 5, rows, 1)]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('progress')
       .setBackground(MID).setFontColor('#7A5B00')
-      .setRanges([sh.getRange(2, 7, rows, 1)]).build(),
+      .setRanges([sh.getRange(2, 6, rows, 1)]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('complete')
       .setBackground(HIGH).setFontColor('#265C33')
-      .setRanges([sh.getRange(2, 7, rows, 1)]).build(),
-    /* the one thing that should shout */
+      .setRanges([sh.getRange(2, 6, rows, 1)]).build(),
+    /* nobody has handed in yet: the row is a name waiting, not a bad mark */
+    SpreadsheetApp.newConditionalFormatRule().whenCellEmpty()
+      .setBackground('#FAFAF7')
+      .setRanges([sh.getRange(2, 3, rows, 1)]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenNumberLessThan(0.4)
       .setFontColor('#A3342A').setBold(true)
-      .setRanges([sh.getRange(2, 6, rows, 1)]).build()
+      .setRanges([sh.getRange(2, 5, rows, 1)]).build()
   ]);
 }
 
-/* A row should not be a mile high, and the filter should exist without being rebuilt
-   on every hand-in — thirty students submitting at once is thirty rebuilds otherwise. */
-function _tidyLastRow(sh) {
-  var r = sh.getLastRow();
-  if (r > 1) sh.setRowHeight(r, 21);
-  if (!sh.getFilter() && r > 1) {
-    try { sh.getRange(1, 1, r, 13).createFilter(); } catch (e) {}
-  }
-}
 
 
 /* ============================================================
@@ -861,17 +890,66 @@ function _labById(id) {
   for (var i = 0; i < LABS.length; i++) if (LABS[i].id === id) return LABS[i];
   return null;
 }
+/* A lab's tab is the class list for that lab: every student has a row from the moment
+   they are imported, empty until they hand in. So you can see at a glance who has done it
+   and who has not, rather than waiting for rows to appear. */
 function _labSheet(lab) {
   var ss = _ss(), sh = ss.getSheetByName(lab.name);
   if (!sh) {
     sh = ss.insertSheet(lab.name);
-    sh.getRange(1, 1, 1, 13).setValues([['When', 'Name', 'Class', 'Score', 'Out of', '%',
-      'Finished?', 'Checks', 'Right first time', 'Working since', 'Code', 'Flags', 'Per station']]);
-    _styleLab(sh);
+    sh.getRange(1, 1, 1, LAB_COLS.length).setValues([LAB_COLS.map(function (c) { return c.h; })]);
   }
   return sh;
 }
+
+/* Give every student on the roster a row here, and leave the ones already present alone.
+   Safe to run as often as you like — it is keyed on the school email. */
+function _seedLab(lab) {
+  var sh = _labSheet(lab);
+  var roster = _sheet(T_STUDENTS);
+  if (roster.getLastRow() < 2) return sh;
+  var EMAIL_COL = 3 + LABS.length + 2;
+  var people = roster.getRange(2, 1, roster.getLastRow() - 1, EMAIL_COL).getValues();
+
+  var have = {};
+  if (sh.getLastRow() > 1) {
+    sh.getRange(2, LAB_EMAIL, sh.getLastRow() - 1, 1).getValues()
+      .forEach(function (r, i) { var e = String(r[0] || '').toLowerCase(); if (e) have[e] = i + 2; });
+  }
+  var add = [];
+  people.forEach(function (p) {
+    var email = String(p[EMAIL_COL - 1] || '').toLowerCase();
+    if (!email) return;
+    if (have[email]) {                             /* already here: keep the name and class true to the roster */
+      var r = have[email], cur = sh.getRange(r, 1, 1, 2).getValues()[0];
+      if (cur[0] !== p[0] || cur[1] !== p[1]) sh.getRange(r, 1, 1, 2).setValues([[p[0], p[1]]]);
+      return;
+    }
+    var row = new Array(LAB_COLS.length).fill('');
+    row[0] = p[0];                 /* name  */
+    row[1] = p[1];                 /* class */
+    row[LAB_EMAIL - 1] = email;
+    add.push(row);
+  });
+  if (add.length) sh.getRange(sh.getLastRow() + 1, 1, add.length, LAB_COLS.length).setValues(add);
+  return sh;
+}
 /** "mouth 9/9 in 14 · stomach 8/9 in 21" — readable in one cell. */
+/* Where this student's row is, adding one if they arrived after the last import. */
+function _rowFor(sh, email, student) {
+  var last = sh.getLastRow();
+  if (last > 1) {
+    var col = sh.getRange(2, LAB_EMAIL, last - 1, 1).getValues();
+    for (var i = 0; i < col.length; i++) {
+      if (String(col[i][0] || '').toLowerCase() === email) return i + 2;
+    }
+  }
+  var row = new Array(LAB_COLS.length).fill('');
+  row[0] = student.name; row[1] = student.cls; row[LAB_EMAIL - 1] = email;
+  sh.getRange(last + 1, 1, 1, LAB_COLS.length).setValues([row]);
+  return last + 1;
+}
+
 function _stations(o) {
   if (!o || typeof o !== 'object') return '';
   return Object.keys(o).map(function (k) { return k + ' ' + o[k]; }).join(' · ');

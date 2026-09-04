@@ -86,6 +86,7 @@ class SS {
 const ss = new SS();
 
 global.SpreadsheetApp = {
+  flush: () => {},
   openById: () => ss, getActive: () => ss, getActiveSpreadsheet: () => ss,
   getUi: () => ({ createMenu: () => { const m = { addItem: () => m, addSeparator: () => m, addToUi: () => {} }; return m; },
                   alert: (a, b) => log('alert: ' + String(b).slice(0, 60)), ButtonSet: { OK: 1 } }),
@@ -100,6 +101,7 @@ global.CacheService = { getScriptCache: () => ({ put: () => {}, get: () => null 
 global.ContentService = { createTextOutput: t => ({ setMimeType: () => t }), MimeType: { TEXT: 1, JSON: 2, JAVASCRIPT: 3 } };
 global.HtmlService = { createHtmlOutputFromFile: () => ({ setWidth: () => ({ setHeight: () => ({}) }) }) };
 global.ScriptApp = { getProjectTriggers: () => [], newTrigger: () => ({ forSpreadsheet: () => ({ onEdit: () => ({ create: () => {} }) }) }) };
+global.LockService = { getScriptLock: () => ({ waitLock: () => true, releaseLock: () => {} }) };
 global.Logger = { log: m => log('log: ' + m) };
 global.Classroom = undefined;                    /* as it is before the service is added */
 global.TOKEN_EMAIL = 'ana@x.kr';
@@ -125,54 +127,147 @@ ok &= run('doGet', () => doGet({}));
 ok &= run('button: refresh', () => onButtonTicked({ range: ss.getSheetByName('Setup').getRange(BTN_ROW.refresh, 3) }));
 ok &= run('button: tidy up', () => onButtonTicked({ range: ss.getSheetByName('Setup').getRange(BTN_ROW.restyle, 3) }));
 
-console.log('— with students and a hand-in —');
+console.log('— importing a class —');
 ok &= run('import two students', () => _upsertStudents(
   [{ name: 'Ana Lee', email: 'ana@x.kr', userId: 'u1' }, { name: 'Bo Kim', email: 'bo@x.kr', userId: 'u2' }], '9A', 'Y9 Biology', 'c1'));
-CLIENT_ID = 'CID';
-ok &= run('a signed-in student is recorded', () => {
-  const before = ss.getSheetByName('Digestion') ? ss.getSheetByName('Digestion').getLastRow() : 1;
-  doPost({ postData: { contents: JSON.stringify({
-    app: 'digestion-lab', name: 'Ana Lee', form: '9A', score: 113, total: 113, token: 'tok',
-    complete: true, checks: 214, firstTime: 71, code: _code('digestion-lab', 'Ana Lee', '9A', '113/113'),
-    from: new Date(Date.now() - 3 * 864e5).toISOString(), stations: { mouth: '8/8 in 11' } }) } });
-  if (ss.getSheetByName('Digestion').getLastRow() === before) throw new Error('it was not recorded');
+ok &= run('every lab has a tab', () => {
+  LABS.forEach(l => { if (!ss.getSheetByName(l.name)) throw new Error('no tab for ' + l.name); });
 });
+ok &= run('every student is waiting in every lab, with no marks', () => {
+  LABS.forEach(l => {
+    const sh = ss.getSheetByName(l.name);
+    if (sh.getLastRow() !== 3) throw new Error(l.name + ' has ' + (sh.getLastRow() - 1) + ' rows, wanted 2');
+    const v = sh.getRange(2, 1, 2, LAB_COLS.length).getValues();
+    if (v[0][0] !== 'Ana Lee' || v[0][1] !== '9A') throw new Error(l.name + ': the name and class are not there');
+    if (v[0][LAB_EMAIL - 1] !== 'ana@x.kr') throw new Error(l.name + ': no email to key on');
+    if (v[0][2] !== '' || v[0][4] !== '') throw new Error(l.name + ': a mark appeared before anyone handed in');
+  });
+});
+ok &= run('importing twice does not double anybody up', () => {
+  _upsertStudents([{ name: 'Ana Lee', email: 'ana@x.kr', userId: 'u1' }], '9A', 'Y9 Biology', 'c1');
+  const sh = ss.getSheetByName('Digestion');
+  if (sh.getLastRow() !== 3) throw new Error('now ' + (sh.getLastRow() - 1) + ' rows');
+});
+
+console.log('— handing in —');
+CLIENT_ID = 'CID';
+const hand = (o) => String(doPost({ postData: { contents: JSON.stringify(Object.assign({
+  app: 'digestion-lab', name: 'Ana Lee', form: '9A', token: 'tok', complete: true,
+  from: new Date(Date.now() - 3 * 864e5).toISOString(), stations: { mouth: '8/8 in 11' } }, o)) } }));
+const anaRow = () => ss.getSheetByName('Digestion').getRange(2, 1, 1, LAB_COLS.length).getValues()[0];
+
+ok &= run('a hand-in fills the row that was waiting', () => {
+  const out = hand({ score: 90, total: 113, checks: 214, firstTime: 71, code: _code('digestion-lab', 'Ana Lee', '9A', '90/113') });
+  if (!/^recorded/.test(out)) throw new Error(out);
+  const sh = ss.getSheetByName('Digestion');
+  if (sh.getLastRow() !== 3) throw new Error('a row was added instead of filled');
+  const r = anaRow();
+  if (r[2] !== 90 || r[3] !== 113) throw new Error('score not written: ' + r.slice(2, 5));
+  if (Math.abs(r[4] - 90 / 113) > 1e-9) throw new Error('percentage wrong: ' + r[4]);
+  if (r[5] !== 'complete') throw new Error('finished flag wrong: ' + r[5]);
+  if (r[9] !== 1) throw new Error('hand-ins should read 1, reads ' + r[9]);
+  if (!(r[10] instanceof Date)) throw new Error('no date on the hand-in');
+});
+ok &= run('nobody else was touched', () => {
+  const bo = ss.getSheetByName('Digestion').getRange(3, 1, 1, LAB_COLS.length).getValues()[0];
+  if (bo[0] !== 'Bo Kim' || bo[2] !== '') throw new Error('Bo Kim was written over');
+});
+ok &= run('a worse second go keeps the better score but still counts', () => {
+  const was = anaRow()[10];
+  const out = hand({ score: 40, total: 113, checks: 300, firstTime: 20, code: _code('digestion-lab', 'Ana Lee', '9A', '40/113') });
+  const r = anaRow();
+  if (r[2] !== 90) throw new Error('a worse run overwrote the best score: ' + r[2]);
+  if (r[6] !== 214) throw new Error('the rest of the worse run leaked in');
+  if (r[9] !== 2) throw new Error('hand-ins should read 2, reads ' + r[9]);
+  if (!(r[10] >= was)) throw new Error('the date did not move');
+  if (!/higher/.test(out)) throw new Error('should say an earlier one still scores higher: ' + out);
+});
+ok &= run('a better go replaces it', () => {
+  hand({ score: 113, total: 113, checks: 118, firstTime: 99, code: _code('digestion-lab', 'Ana Lee', '9A', '113/113') });
+  const r = anaRow();
+  if (r[2] !== 113 || r[6] !== 118 || r[7] !== 99) throw new Error('the better run was not kept: ' + r.slice(2, 8));
+  if (r[9] !== 3) throw new Error('hand-ins should read 3, reads ' + r[9]);
+});
+ok &= run('handing in part-way through says so', () => {
+  TOKEN_EMAIL = 'bo@x.kr';
+  hand({ name: 'Bo Kim', score: 20, total: 40, complete: false, code: _code('digestion-lab', 'Bo Kim', '9A', '20/40') });
+  TOKEN_EMAIL = 'ana@x.kr';
+  const bo = ss.getSheetByName('Digestion').getRange(3, 1, 1, LAB_COLS.length).getValues()[0];
+  if (bo[5] !== 'progress') throw new Error('not marked as in progress: ' + bo[5]);
+  if (!/NOT ALL QUESTIONS|PROGRESS/.test(bo[12])) throw new Error('no flag raised: ' + bo[12]);
+});
+ok &= run('a student who joined after the import gets a row', () => {
+  _upsertStudents([{ name: 'Chae Won', email: 'chae@x.kr', userId: 'u3' }], '9A', 'Y9 Biology', 'c1');
+  TOKEN_EMAIL = 'chae@x.kr';
+  hand({ name: 'Chae Won', score: 50, total: 113, code: _code('digestion-lab', 'Chae Won', '9A', '50/113') });
+  TOKEN_EMAIL = 'ana@x.kr';
+  const sh = ss.getSheetByName('Digestion');
+  if (sh.getLastRow() !== 4) throw new Error('rows: ' + (sh.getLastRow() - 1));
+  if (sh.getRange(4, 1).getValue() !== 'Chae Won') throw new Error('not the new student');
+});
+
+console.log('— who is turned away —');
 ok &= run('somebody not on the roster leaves no trace', () => {
   TOKEN_EMAIL = 'stranger@elsewhere.com';
-  const rowsBefore = ss.getSheetByName('Digestion').getLastRow();
+  const before = ss.getSheetByName('Digestion').getLastRow();
   const rejBefore = ss.getSheetByName('Rejected') ? ss.getSheetByName('Rejected').getLastRow() : 0;
-  const out = String(doPost({ postData: { contents: JSON.stringify({
-    app: 'digestion-lab', name: 'A Stranger', form: '9A', score: 113, total: 113, token: 'tok',
-    code: _code('digestion-lab', 'A Stranger', '9A', '113/113') }) } }));
+  const out = hand({ name: 'A Stranger', score: 113, total: 113, code: _code('digestion-lab', 'A Stranger', '9A', '113/113') });
   TOKEN_EMAIL = 'ana@x.kr';
   if (!/not on this class list/.test(out)) throw new Error('should have been turned away: ' + out);
-  if (ss.getSheetByName('Digestion').getLastRow() !== rowsBefore) throw new Error('a stranger was recorded');
+  if (ss.getSheetByName('Digestion').getLastRow() !== before) throw new Error('a stranger was recorded');
   const rej = ss.getSheetByName('Rejected');
   if (rej && rej.getLastRow() !== rejBefore) throw new Error('a stranger left a trace in Rejected');
+  const all = ss.getSheetByName('Digestion').getRange(1, 1, before, LAB_COLS.length).getValues();
+  if (JSON.stringify(all).indexOf('stranger') >= 0) throw new Error('the stranger is written somewhere');
 });
 ok &= run('an unsigned hand-in leaves no trace', () => {
   const before = ss.getSheetByName('Digestion').getLastRow();
-  doPost({ postData: { contents: JSON.stringify({ app: 'digestion-lab', name: 'X', score: 1, total: 113 }) } });
+  const out = String(doPost({ postData: { contents: JSON.stringify({ app: 'digestion-lab', name: 'X', score: 1, total: 113 }) } }));
+  if (!/not signed in/.test(out)) throw new Error(out);
   if (ss.getSheetByName('Digestion').getLastRow() !== before) throw new Error('recorded anyway');
 });
-ok &= run('a student with a broken code is quarantined', () => {
+ok &= run('a student with a broken code is quarantined, not marked', () => {
   const rej = ss.getSheetByName('Rejected') ? ss.getSheetByName('Rejected').getLastRow() : 0;
-  doPost({ postData: { contents: JSON.stringify({
-    app: 'digestion-lab', name: 'Ana Lee', form: '9A', score: 999, total: 113, token: 'tok', code: 'DL-XX-YY' }) } });
+  const best = anaRow()[2];
+  hand({ score: 999, total: 113, code: 'DL-XX-YY' });
   if (ss.getSheetByName('Rejected').getLastRow() <= rej) throw new Error('not quarantined');
+  if (anaRow()[2] !== best) throw new Error('a rejected hand-in still changed the mark');
 });
-ok &= run('setup again (idempotent)', () => setup());
-ok &= run('refreshDashboard with data', () => refreshDashboard());
+ok &= run('a hand-in for a lab that does not exist is ignored', () => {
+  const out = String(doPost({ postData: { contents: JSON.stringify({ app: 'not-a-lab', score: 1, total: 1, token: 'tok' }) } }));
+  if (!/unknown lab/.test(out)) throw new Error(out);
+});
 
-
-console.log('— sign-in edge cases —');
-
+console.log('— and afterwards —');
+ok &= run('the dashboard shows the marks', () => {
+  refreshDashboard();
+  const sh = ss.getSheetByName('Students');
+  const row = sh.getRange(2, 1, 1, 3 + LABS.length + 2).getValues()[0];
+  if (row[0] !== 'Ana Lee') throw new Error('wrong student first');
+  if (Math.abs(row[2] - 1) > 1e-9) throw new Error("Ana's digestion mark is " + row[2]);
+  if (row[3] !== '') throw new Error('a lab nobody has done shows a mark');
+  if (row[2 + LABS.length] !== 1) throw new Error('labs-done count is ' + row[2 + LABS.length]);
+});
+ok &= run('tidy up leaves every mark alone', () => {
+  const before = JSON.stringify(ss.getSheetByName('Digestion').getRange(1, 1, 4, LAB_COLS.length).getValues());
+  setup();
+  const after = JSON.stringify(ss.getSheetByName('Digestion').getRange(1, 1, 4, LAB_COLS.length).getValues());
+  if (before !== after) throw new Error('Tidy up changed the data');
+});
+ok &= run('refreshDashboard twice running is the same', () => {
+  refreshDashboard();
+  const a = JSON.stringify(ss.getSheetByName('Students').getRange(2, 1, 3, 3 + LABS.length + 2).getValues());
+  refreshDashboard();
+  const b = JSON.stringify(ss.getSheetByName('Students').getRange(2, 1, 3, 3 + LABS.length + 2).getValues());
+  if (a !== b) throw new Error('it drifts each time it runs');
+});
 
 console.log('\ntabs built: ' + ss.sheets.map(s => s.name).join(', '));
 const st = ss.getSheetByName('Students');
 console.log('Students: ' + (st.getLastRow() - 1) + ' rows × ' + st.getLastColumn() + ' cols');
 const dg = ss.getSheetByName('Digestion');
-console.log('Digestion: ' + (dg ? dg.getLastRow() - 1 : 0) + ' hand-in(s)');
+const filled = dg ? dg.getRange(2, 3, dg.getLastRow() - 1, 1).getValues().filter(r => r[0] !== '').length : 0;
+console.log('Digestion: ' + (dg ? dg.getLastRow() - 1 : 0) + ' student(s), ' + filled + ' handed in');
 const rj = ss.getSheetByName('Rejected');
 console.log('Rejected:  ' + (rj ? rj.getLastRow() - 1 : 0) + ' row(s)');
 process.exit(ok ? 0 : 1);
