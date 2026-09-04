@@ -8,7 +8,8 @@ the reading happens. Point at a lab and its system lights up in the body with th
 organ named; point at an organ and the lab it belongs to lights up. Left alone,
 the plate tours the nine systems by itself. It all fits on one screen.
 
-**Live:** not published yet — see *Publishing* below.
+**Live:** https://mompel226.github.io/IGCSE-revision-app/ — the 3D body at the root,
+the flat plate at `/plate.html`.
 
 ---
 
@@ -68,18 +69,18 @@ Keep the footer credit if you add more Servier art.
 
 ## Publishing
 
-The hub is a plain static site — no build step beyond `inline-plate.py`.
+The hub is a plain static site — no build step beyond `inline-plate.py`. It is
+published from the **`IGCSE-revision-app`** repository, `main` branch, by GitHub
+Pages:
 
-Put this folder in its own GitHub repository and turn on GitHub Pages. Since
-the labs already live at `mompel226.github.io/digestion-lab/`, the repository
-should be named **`mompel226.github.io`**, which serves the hub at the root:
-
-- `mompel226.github.io` → this hub
+- `mompel226.github.io/IGCSE-revision-app/` → this hub
 - `mompel226.github.io/digestion-lab/` → the first lab
 - `mompel226.github.io/<next-lab>/` → each one after that
 
-Any other repository name works too; the labs are linked by absolute URL, so
-nothing breaks.
+Each lab is its own repository. They are linked by absolute URL in both
+directions — `url` in `js/topics.js` going out, and one line in each lab's
+header coming back (`docs/link-back.md`) — so nothing here has to know where a
+lab lives beyond that one field.
 
 ---
 
@@ -98,7 +99,18 @@ assets/model/body.glb     the MRI body, 40 organ groups
 assets/anatomy/body.svg   the specimen (source of the inlined plate)
 assets/anatomy/organs/    the organ paintings
 tools/inline-plate.py     re-inlines body.svg into index.html
+
+apps-script/Code.gs             the marks spreadsheet: one script for every lab
+apps-script/ClassroomImport.html  the import window it opens
+tools/gastest.js          runs Code.gs against a stand-in for Google Sheets
+README.md                 the front page, and the copy-paste setup for the sheet
+docs/link-back.md         the one line that points a lab back here
 ```
+
+The spreadsheet lives here rather than in any one lab because it collects **all**
+of them — see *The marks spreadsheet* in `README.md`. Change `apps-script/Code.gs`
+and the copy inlined in the README has to change with it; `tools/gastest.js` is
+what says whether the change works.
 
 ---
 

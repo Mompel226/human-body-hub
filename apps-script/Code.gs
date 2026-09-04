@@ -654,7 +654,7 @@ function _styleSetup() {
     ['', ''],
     ['Students', 'every student, every lab, best score so far. Filter the Class column to see one class.'],
     ['Labs', 'one row per lab: how many questions it has, and how many hand-ins it has had.'],
-    ['Digestion, Circulation, …', 'every hand-in for that lab. A tab appears the first time that lab is used.'],
+    ['Digestion, Circulation, …', 'your class list again, one tab per lab. Every student has a row from the moment you import them; handing in fills it in. Handing in twice updates the same row and keeps the better score.'],
     ['Rejected', 'a hand-in from one of your students whose numbers did not add up.'],
     ['', ''],
     ['Only your students land here', 'a hand-in is kept when the Google account that signed in is on the Students tab. The labs are public, so anyone in the world may use them — their work is not recorded anywhere.'],
@@ -724,7 +724,7 @@ function _styleStudents() {
 
   var cols = [
     { h:'Name', w:210, edit:true,
-      note:'The student, as Google Classroom spells it. A hand-in is matched to this by name, so correct a spelling here if a hand-in did not find its student.' },
+      note:'The student, as Google Classroom spells it. Correct a spelling here and it follows them into every lab tab the next time you import or Tidy up. Hand-ins are matched by school email, not by this, so a correction cannot lose anybody\'s work.' },
     { h:'Class', w:88, align:'center', bold:true, edit:true, list:_classList(),
       note:'Which class they are in. Used by the filter, and shown on every hand-in.' }
   ];
