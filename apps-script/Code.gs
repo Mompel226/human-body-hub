@@ -272,6 +272,16 @@ function _needClassroom() {
     'permission, and open this window again.');
 }
 
+/* Opens the import window. The menu names this function as a string, so if it is ever
+   renamed the menu says "Script function not found" and nothing explains why — which is
+   what tools/gastest.js now checks for. */
+function showClassroomImport() {
+  _needClassroom();
+  var html = HtmlService.createHtmlOutputFromFile('ClassroomImport')
+    .setWidth(880).setHeight(620);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Import students from Google Classroom');
+}
+
 function getBatchImportData() {
   _needClassroom();
   var courses = [], page = null;

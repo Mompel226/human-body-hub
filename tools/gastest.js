@@ -118,6 +118,35 @@ function run(label, fn) {
   catch (e) { console.log('  FAIL ' + label + '  →  ' + e.message); return false; }
 }
 let ok = true;
+/* Everything that reaches a function by NAME rather than by calling it: the menu items,
+   and every google.script.run call in the dialog. Apps Script only finds out these are
+   wrong when a human clicks — "Script function not found" — so they are checked here. */
+console.log('— names reached by string —');
+const SRC = fs.readFileSync(process.argv[2] || 'apps-script/Code.gs', 'utf8');
+const HTML = fs.readFileSync('apps-script/ClassroomImport.html', 'utf8');
+const defined = n => new RegExp('^function\\s+' + n + '\\s*\\(', 'm').test(SRC);
+
+ok &= run('every menu item points at a function that exists', () => {
+  const named = [...SRC.matchAll(/\.addItem\(\s*'(?:[^'\\]|\\.)*'\s*,\s*'([^']+)'/g)].map(m => m[1]);
+  if (!named.length) throw new Error('no menu items found — has the menu moved?');
+  const missing = named.filter(n => !defined(n));
+  if (missing.length) throw new Error('the menu names nothing: ' + missing.join(', '));
+});
+ok &= run('every google.script.run call in the window exists', () => {
+  if (!/google\.script\.run/.test(HTML)) throw new Error('the window calls nothing at all — has it been gutted?');
+  /* the chain is written one call per line, so the server call is a line-leading .name( */
+  const named = [...new Set([...HTML.matchAll(/^\s*\.\s*([A-Za-z_$][\w$]*)\s*\(/gm)].map(m => m[1]))]
+    .filter(n => !['withSuccessHandler', 'withFailureHandler', 'withUserObject'].includes(n));
+  if (!named.length) throw new Error('found no server calls to check');
+  const missing = named.filter(n => !defined(n));
+  if (missing.length) throw new Error('the window calls nothing named: ' + missing.join(', '));
+});
+ok &= run('the window file the script opens is really there', () => {
+  const m = SRC.match(/createHtmlOutputFromFile\('([^']+)'\)/);
+  if (!m) throw new Error('nothing opens the import window at all');
+  if (!fs.existsSync('apps-script/' + m[1] + '.html')) throw new Error('no such file: ' + m[1] + '.html');
+});
+
 console.log('— with an empty spreadsheet —');
 ok &= run('onOpen', () => onOpen());
 ok &= run('setup / Tidy up', () => setup());

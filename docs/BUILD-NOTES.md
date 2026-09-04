@@ -109,8 +109,24 @@ docs/link-back.md         the one line that points a lab back here
 
 The spreadsheet lives here rather than in any one lab because it collects **all**
 of them — see *The marks spreadsheet* in `README.md`. Change `apps-script/Code.gs`
-and the copy inlined in the README has to change with it; `tools/gastest.js` is
-what says whether the change works.
+and the copy inlined in the README has to change with it.
+
+### The harness
+
+```
+node tools/gastest.js apps-script/Code.gs
+```
+
+Runs the whole script against a stand-in for Google Sheets, Classroom and the token
+endpoint. It cannot tell you whether the spreadsheet *looks* right, but it runs every
+menu item and button, an import, a first hand-in, a second and third, a part-way one,
+a forged one, a stranger's, and the dashboard — and fails on anything undefined or out
+of bounds. Exit code is non-zero on any failure.
+
+It also checks the names that are reached **as strings** rather than called: every
+`addItem` in the menu, and every `google.script.run` call in `ClassroomImport.html`.
+Nothing else can catch those — Apps Script only reports them when a human clicks and
+gets *Script function not found*.
 
 ---
 
