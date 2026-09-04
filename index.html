@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/hub.css?v=1788522564">
+<link rel="stylesheet" href="css/hub.css?v=1788522630">
 <style>
   /* the 3D stage replaces the flat plate, everything else is the hub's */
   #stage{position:absolute;inset:0;z-index:1}
@@ -34,6 +34,9 @@
     /* under the layer buttons, clear of the hint pill along the bottom */
     .tourbtn{top:58px;bottom:auto;left:10px}
     .tourbtn--home{left:54px}
+    /* the touch wording is longer than the frame is wide, so let it wrap */
+    .hint{white-space:normal;max-width:min(86%,300px);text-align:center;line-height:1.6;
+          font-size:9.5px;letter-spacing:.1em}
   }
   .loading{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;
@@ -113,13 +116,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="js/topics.js?v=1788522564"></script>
+<script src="js/topics.js?v=1788522630"></script>
 <script type="importmap">
 {"imports":{
   "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
   "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
 }}
 </script>
-<script type="module" src="js/body3d.js?v=1788522564"></script>
+<script type="module" src="js/body3d.js?v=1788522630"></script>
 </body>
 </html>
