@@ -48,7 +48,7 @@ var LABS = [
   { id:'reproduction-lab',  name:'Reproduction',     topic:'16 · Reproduction',         questions:0 }
 ];
 
-var T_SETUP = 'Setup', T_LABS = 'Labs', T_STUDENTS = 'Students', T_SUMMARY = 'Summary';
+var T_SETUP = 'Setup', T_LABS = 'Labs', T_STUDENTS = 'Students';
 
 /* House colours, so the Sheet looks like the labs it collects. */
 var INK = '#14572B', INK_SOFT = '#E4EFE7', LINE = '#C9D8CD', WARN = '#B8860B', BAD = '#B03A2E';
@@ -61,7 +61,7 @@ function onOpen() {
     .addItem('🎓  Import students from Classroom…', 'showClassroomImport')
     .addItem('🩺  Check the set-up', 'checkSetup')
     .addSeparator()
-    .addItem('📊  Rebuild the summary', 'rebuildSummary')
+    .addItem('📊  Refresh everyone\'s progress', 'refreshDashboard')
     .addItem('🎨  Re-apply the formatting', 'restyleAll')
     .addSeparator()
     .addItem('🔒  Close Mastery everywhere', 'closeMasteryAll')
@@ -180,7 +180,7 @@ function getBatchImportData() {
   /* how many students each class already has here, so the dialog can say so */
   var have = {}, rows = _sheet(T_STUDENTS).getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
-    var cls = String(rows[i][2] || '').toUpperCase();
+    var cls = String(rows[i][1] || '').toUpperCase();
     if (cls) have[cls] = (have[cls] || 0) + 1;
   }
   return { courses: courses, have: have };
@@ -216,7 +216,7 @@ function executeBatchImportAll(sels, jobId) {
   });
 
   _publish(jobId, results, true);
-  _styleStudents();
+  refreshDashboard();
   return results;
 }
 
@@ -235,26 +235,29 @@ function _publish(jobId, results, done) {
    the key is the school email. */
 function _upsertStudents(students, classCode, courseName, courseId) {
   var sh = _sheet(T_STUDENTS);
+  var EMAIL_COL = 3 + LABS.length + 2;                  /* Name, Class, the labs, started, average, then email */
   var rows = sh.getDataRange().getValues();
   var seen = {}, rowOf = {};
   for (var i = 1; i < rows.length; i++) {
-    var em = String(rows[i][1] || '').toLowerCase();
+    var em = String(rows[i][EMAIL_COL - 1] || '').toLowerCase();
     if (em) { seen[em] = true; rowOf[em] = i + 1; }
   }
   var add = [], skipped = 0, moved = 0, now = new Date();
   students.forEach(function (st) {
     if (st.email && seen[st.email]) {
       var r = rowOf[st.email];
-      if (String(sh.getRange(r, 3).getValue()).toUpperCase() !== classCode) {
-        sh.getRange(r, 3).setValue(classCode); moved++;
+      if (String(sh.getRange(r, 2).getValue()).toUpperCase() !== classCode) {
+        sh.getRange(r, 2).setValue(classCode); moved++;
       }
       skipped++;
       return;
     }
-    add.push([st.name, st.email, classCode, courseName, now, st.userId, courseId]);
+    add.push([st.name, classCode, st.email, courseName, now, st.userId, courseId]);
   });
   if (add.length) {
-    sh.getRange(sh.getLastRow() + 1, 1, add.length, add[0].length).setValues(add);
+    var at = sh.getLastRow() + 1;
+    sh.getRange(at, 1, add.length, 2).setValues(add.map(function (a) { return [a[0], a[1]]; }));
+    sh.getRange(at, EMAIL_COL, add.length, 5).setValues(add.map(function (a) { return a.slice(2); }));
   }
   return { status: 'success', added: add.length, skipped: skipped, moved: moved };
 }
@@ -357,8 +360,11 @@ function checkSetup() {
 function setup() {
   _sheet(T_SETUP); _sheet(T_LABS); _sheet(T_STUDENTS);
   LABS.forEach(function (l) { if (l.questions) _labSheet(l); });   /* built labs get a tab now */
-  _sheet(T_SUMMARY);
+  var old = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Summary');
+  if (old && old.getLastRow() < 2) SpreadsheetApp.openById(SHEET_ID).deleteSheet(old);  /* the Students tab is the summary now */
+  _installButtons();
   restyleAll();
+  refreshDashboard();
   SpreadsheetApp.getActive().toast('Every tab is built and styled.', 'Biology Labs', 6);
 }
 
@@ -368,8 +374,6 @@ function restyleAll() {
     var sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName(l.name);
     if (sh) _styleLab(sh);
   });
-  var sum = SpreadsheetApp.openById(SHEET_ID).getSheetByName(T_SUMMARY);
-  if (sum) _styleSummary(sum);
 }
 
 /* One place decides what "readable" means: a header that stands out, a frozen
@@ -417,35 +421,86 @@ function _dress(sh, headers, widths, opts) {
   sh.setHiddenGridlines(true);
 }
 
+/* The Setup tab is where you press things. The checkboxes are buttons: tick one, it
+   runs and unticks itself. (Importing needs a window, which a trigger may not open —
+   that one stays on the 🧪 menu.) */
+var BTN_ROW = { refresh: 13, close: 14, open: 15, restyle: 16 };
+var URL_ROW = 7;
+
 function _styleSetup() {
   var sh = _sheet(T_SETUP);
-  /* Read what is already there before clearing: B7 is the one cell the teacher is
-     told to fill in, and re-applying the formatting must not wipe it. */
   var url = '';
-  try { url = String(sh.getRange('B7').getValue() || '').trim(); } catch (e) {}
+  try { url = String(sh.getRange(URL_ROW, 2).getValue() || '').trim(); } catch (e) {}
   if (!/^https?:/i.test(url)) url = PropertiesService.getScriptProperties().getProperty('WEB_APP_URL') || '';
   if (!url) url = '(paste your /exec URL here, so you can find it again)';
   sh.clear();
+  sh.getBandings().forEach(function (b) { b.remove(); });
+
   var lines = [
-    ['Biology Labs — one spreadsheet for every lab', ''],
+    ['Biology Labs', 'one spreadsheet for every lab'],
     ['', ''],
-    ['What is here', 'Labs — one row per lab, and the Mastery switch for each.'],
-    ['', 'Students — your Classroom rosters. 🧪 Biology Labs ▸ Import students…'],
-    ['', 'One tab per lab — every hand-in, newest at the bottom. Use the filter row to pick a class.'],
-    ['', 'Summary — best score per student per lab. Rebuild it from the menu.'],
+    ['Students', 'every student, every lab, best score so far. Filter the Class column to see one class.'],
+    ['Labs', 'one row per lab, and the switch that closes Mastery during a test.'],
+    ['Digestion, Circulation, …', 'every hand-in for that lab. A tab appears the first time the lab is used.'],
+    ['', ''],
     ['Web app URL', url],
     ['', ''],
-    ['To close Mastery during a test', 'Labs tab ▸ untick "Mastery open" for that lab. Every open page follows within two minutes.'],
-    ['To add students who joined later', '🧪 Biology Labs ▸ Import students… ▸ tick the classes ▸ Import. It adds only the new ones.'],
-    ['After editing the script', 'Deploy ▸ Manage deployments ▸ pencil ▸ Version: New version ▸ Deploy.']
+    ['Buttons', 'tick one — it runs, then unticks itself'],
+    ['', ''],
+    ['Import students from Classroom', 'on the 🧪 Biology Labs menu (it opens a window, so it cannot be a checkbox)'],
+    ['', ''],
+    ['Refresh everyone\'s progress', ''],
+    ['Close Mastery in every lab', ''],
+    ['Open Mastery in every lab', ''],
+    ['Re-apply the formatting', ''],
+    ['', ''],
+    ['If something looks wrong', '🧪 Biology Labs ▸ Check the set-up'],
+    ['After editing the script', 'Deploy ▸ Manage deployments ▸ pencil ▸ Version: New version ▸ Deploy']
   ];
   sh.getRange(1, 1, lines.length, 2).setValues(lines);
-  sh.getRange('A1').setFontSize(16).setFontWeight('bold').setFontColor(INK);
+  sh.getRange('A1').setFontSize(17).setFontWeight('bold').setFontColor(INK);
+  sh.getRange('B1').setFontColor('#6B7B6F');
   sh.getRange(3, 1, lines.length - 2, 1).setFontWeight('bold').setFontColor(INK);
-  sh.getRange(1, 1, lines.length, 2).setVerticalAlignment('top').setWrap(true);
-  sh.setColumnWidth(1, 230); sh.setColumnWidth(2, 760);
+  sh.getRange(9, 1).setFontSize(13);
+  sh.getRange(1, 1, lines.length, 2).setVerticalAlignment('middle').setWrap(true);
+  sh.setColumnWidth(1, 260); sh.setColumnWidth(2, 720); sh.setColumnWidth(3, 60);
+  for (var r = 1; r <= lines.length; r++) sh.setRowHeight(r, r === 1 ? 34 : 24);
+
+  /* the buttons */
+  Object.keys(BTN_ROW).forEach(function (k) {
+    var r = BTN_ROW[k];
+    sh.getRange(r, 3).insertCheckboxes().setValue(false).setHorizontalAlignment('center');
+    sh.getRange(r, 1, 1, 3).setBackground('#EFF5F0');
+  });
+  sh.getRange(BTN_ROW.refresh, 1, 4, 1).setFontColor(INK);
   sh.setHiddenGridlines(true);
-  sh.getBandings().forEach(function (b) { b.remove(); });
+}
+
+/* Ticking a button runs it. Installed by setup(); a simple onEdit could not do this. */
+function _installButtons() {
+  var have = ScriptApp.getProjectTriggers().some(function (t) {
+    return t.getHandlerFunction() === 'onButtonTicked';
+  });
+  if (have) return;
+  ScriptApp.newTrigger('onButtonTicked')
+    .forSpreadsheet(SpreadsheetApp.openById(SHEET_ID)).onEdit().create();
+}
+
+function onButtonTicked(e) {
+  try {
+    if (!e || !e.range) return;
+    var sh = e.range.getSheet();
+    if (sh.getName() !== T_SETUP || e.range.getColumn() !== 3) return;
+    if (e.range.getValue() !== true) return;
+    var row = e.range.getRow();
+    e.range.setValue(false);
+    if (row === BTN_ROW.refresh) refreshDashboard();
+    else if (row === BTN_ROW.close) closeMasteryAll();
+    else if (row === BTN_ROW.open) openMasteryAll();
+    else if (row === BTN_ROW.restyle) restyleAll();
+  } catch (err) {
+    SpreadsheetApp.getActive().toast('That button failed: ' + err, 'Biology Labs', 10);
+  }
 }
 
 function _styleLabs() {
@@ -464,13 +519,90 @@ function _styleLabs() {
 
 function _styleStudents() {
   var sh = _sheet(T_STUDENTS);
-  _dress(sh,
-    ['Name', 'School email', 'Class', 'Classroom course', 'Imported', 'Classroom user id', 'Course id'],
-    [210, 260, 80, 260, 130, 170, 140],
-    { freezeCols: 1, formats: { 5: 'dd MMM yyyy' } });
-  sh.hideColumns(6, 2);                    /* the ids are needed, not looked at */
+  var head = ['Name', 'Class'].concat(LABS.map(function (l) { return l.name; }))
+             .concat(['Labs started', 'Average', 'School email', 'Classroom course', 'Imported', 'Classroom user id', 'Course id']);
+  var widths = [220, 72].concat(LABS.map(function () { return 96; }))
+               .concat([96, 90, 250, 240, 120, 170, 140]);
+  _dress(sh, head, widths, { freezeCols: 2, headerHeight: 40, formats: { 26: 'dd MMM yyyy' } });
+
+  var L = LABS.length, first = 3, rows = Math.max(0, sh.getLastRow() - 1);
+
+  /* the working columns are there when they are wanted and out of the way when not */
+  sh.hideColumns(first + L + 2, 5);
+
+  /* a lab that is not built yet still gets its column, greyed so it reads as "not yet" */
+  LABS.forEach(function (l, i) {
+    var built = !!SpreadsheetApp.openById(SHEET_ID).getSheetByName(l.name);
+    sh.getRange(1, first + i).setFontColor(built ? '#FFFFFF' : '#9DB3A4')
+      .setFontStyle(built ? 'normal' : 'italic')
+      .setNote(l.topic + (built ? '' : '\n\nThis lab is not built yet.'));
+  });
+
+  if (!rows) return;
+  sh.getRange(2, 2, rows, 1).setHorizontalAlignment('center').setFontWeight('bold');
+  sh.getRange(2, first, rows, L + 2).setHorizontalAlignment('center').setNumberFormat('0%');
+  sh.getRange(2, first + L, rows, 1).setNumberFormat('0');           /* labs started is a count */
+
+  var pct = sh.getRange(2, first, rows, L);
+  var avg = sh.getRange(2, first + L + 1, rows, 1);
+  sh.setConditionalFormatRules([
+    SpreadsheetApp.newConditionalFormatRule()
+      .setGradientMinpointWithValue('#F6C7C3', SpreadsheetApp.InterpolationType.NUMBER, '0')
+      .setGradientMidpointWithValue('#FDE8B4', SpreadsheetApp.InterpolationType.NUMBER, '0.6')
+      .setGradientMaxpointWithValue('#B7E1CD', SpreadsheetApp.InterpolationType.NUMBER, '1')
+      .setRanges([pct, avg]).build(),
+    SpreadsheetApp.newConditionalFormatRule()          /* nothing handed in yet reads as empty, not as zero */
+      .whenCellEmpty().setBackground('#FAFAF7')
+      .setRanges([pct]).build()
+  ]);
+}
+
+/* The dashboard: every student, every lab, best score so far. Written as values rather
+   than formulas so the sheet stays fast and never shows #REF for a lab that does not
+   exist yet — the column is simply empty until that lab hands in. */
+function refreshDashboard() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = _sheet(T_STUDENTS);
   var rows = Math.max(0, sh.getLastRow() - 1);
-  if (rows) sh.getRange(2, 3, rows, 1).setHorizontalAlignment('center').setFontWeight('bold');
+  if (!rows) { SpreadsheetApp.getActive().toast('No students yet — import a class first.', 'Biology Labs', 5); return; }
+
+  var names = sh.getRange(2, 1, rows, 1).getValues();
+  var rowOf = {};
+  names.forEach(function (r, i) { var k = _tidy(r[0]); if (k) rowOf[k] = i; });
+
+  var L = LABS.length, first = 3;
+  var grid = names.map(function () { return new Array(L + 2).fill(''); });
+  var unmatched = {};
+
+  LABS.forEach(function (lab, c) {
+    var tab = ss.getSheetByName(lab.name);
+    if (!tab || tab.getLastRow() < 2) return;
+    var data = tab.getRange(2, 1, tab.getLastRow() - 1, 7).getValues();
+    data.forEach(function (r) {
+      var k = _tidy(r[1]); if (!k) return;
+      var pc = Number(r[6]) || 0;
+      if (!(k in rowOf)) { unmatched[r[1]] = true; return; }
+      var i = rowOf[k];
+      if (grid[i][c] === '' || pc > grid[i][c]) grid[i][c] = pc;
+    });
+  });
+
+  grid.forEach(function (row) {
+    var done = 0, sum = 0;
+    for (var c = 0; c < L; c++) if (row[c] !== '') { done++; sum += row[c]; }
+    row[L] = done || '';
+    row[L + 1] = done ? sum / done : '';
+  });
+
+  sh.getRange(2, first, rows, L + 2).setValues(grid);
+  _styleStudents();
+
+  var miss = Object.keys(unmatched);
+  SpreadsheetApp.getActive().toast(
+    'Progress updated for ' + rows + ' students.' +
+    (miss.length ? '  ' + miss.length + ' hand-in name(s) matched nobody: ' + miss.slice(0, 4).join(', ') +
+                   (miss.length > 4 ? '…' : '') + ' — check the spelling in the lab tab.' : ''),
+    'Biology Labs', miss.length ? 12 : 5);
 }
 
 function _styleLab(sh) {
@@ -517,58 +649,6 @@ function _tidyLastRow(sh) {
   }
 }
 
-function rebuildSummary() {
-  var ss = SpreadsheetApp.openById(SHEET_ID);
-  var sh = _sheet(T_SUMMARY);
-  var live = LABS.filter(function (l) { return ss.getSheetByName(l.name); });
-
-  /* name → class, from the roster, so a student who never handed in still shows */
-  var out = {}, order = [];
-  var st = _sheet(T_STUDENTS).getDataRange().getValues();
-  for (var i = 1; i < st.length; i++) {
-    var nm = String(st[i][0] || '').trim();
-    if (!nm) continue;
-    if (!out[nm]) { out[nm] = { cls: st[i][2] || '', best: {} }; order.push(nm); }
-  }
-  live.forEach(function (l) {
-    var rows = ss.getSheetByName(l.name).getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
-      var nm = String(rows[i][1] || '').trim(); if (!nm) continue;
-      if (!out[nm]) { out[nm] = { cls: rows[i][2] || '', best: {} }; order.push(nm); }
-      var pc = Number(rows[i][6]) || 0;
-      if (!(l.id in out[nm].best) || pc > out[nm].best[l.id]) out[nm].best[l.id] = pc;
-    }
-  });
-
-  order.sort(function (a, b) {
-    var A = out[a], B = out[b];
-    return String(A.cls).localeCompare(String(B.cls)) || a.localeCompare(b);
-  });
-
-  sh.clear();
-  var head = ['Name', 'Class'].concat(live.map(function (l) { return l.name; }));
-  var body = order.map(function (nm) {
-    return [nm, out[nm].cls].concat(live.map(function (l) {
-      return (l.id in out[nm].best) ? out[nm].best[l.id] : '';
-    }));
-  });
-  sh.getRange(1, 1, 1, head.length).setValues([head]);
-  if (body.length) sh.getRange(2, 1, body.length, head.length).setValues(body);
-
-  _dress(sh, head, [210, 70].concat(live.map(function () { return 110; })),
-         { freezeCols: 2 });
-  if (body.length) {
-    var pct = sh.getRange(2, 3, body.length, live.length);
-    pct.setNumberFormat('0%').setHorizontalAlignment('center');
-    sh.setConditionalFormatRules([SpreadsheetApp.newConditionalFormatRule()
-      .setGradientMinpointWithValue('#F4C7C3', SpreadsheetApp.InterpolationType.NUMBER, '0')
-      .setGradientMidpointWithValue('#FCE8B2', SpreadsheetApp.InterpolationType.NUMBER, '0.6')
-      .setGradientMaxpointWithValue('#B7E1CD', SpreadsheetApp.InterpolationType.NUMBER, '1')
-      .setRanges([pct]).build()]);
-  }
-  SpreadsheetApp.getActive().toast('Summary rebuilt: ' + body.length + ' students, ' + live.length + ' lab(s).', 'Biology Labs', 5);
-}
-function _styleSummary(sh) { if (sh.getLastRow() > 1) sh.setFrozenRows(1); }
 
 /* ============================================================
    6. Plumbing
@@ -587,8 +667,10 @@ function _sheet(name) {
     });
     sh.getRange(2, 1, rows.length, 7).setValues(rows);
   } else if (name === T_STUDENTS) {
-    sh.getRange(1, 1, 1, 7).setValues([['Name', 'School email', 'Class', 'Classroom course',
-                                        'Imported', 'Classroom user id', 'Course id']]);
+    var head = ['Name', 'Class'].concat(LABS.map(function (l) { return l.name; }))
+               .concat(['Labs started', 'Average', 'School email', 'Classroom course',
+                        'Imported', 'Classroom user id', 'Course id']);
+    sh.getRange(1, 1, 1, head.length).setValues([head]);
   }
   return sh;
 }
