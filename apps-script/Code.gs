@@ -59,6 +59,7 @@ var INK = '#14572B', INK_SOFT = '#E4EFE7', LINE = '#C9D8CD', WARN = '#B8860B', B
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('🧪 Biology Labs')
     .addItem('🎓  Import students from Classroom…', 'showClassroomImport')
+    .addItem('🩺  Check the set-up', 'checkSetup')
     .addSeparator()
     .addItem('📊  Rebuild the summary', 'rebuildSummary')
     .addItem('🎨  Re-apply the formatting', 'restyleAll')
@@ -146,7 +147,19 @@ function showClassroomImport() {
   SpreadsheetApp.getUi().showModalDialog(html, 'Import students from Google Classroom');
 }
 
+/* "Classroom is not defined" is the advanced service not being switched on. Say so in
+   words a teacher can act on, rather than letting a ReferenceError reach the dialog. */
+function _needClassroom() {
+  if (typeof Classroom !== 'undefined' && Classroom && Classroom.Courses) return;
+  throw new Error(
+    'Google Classroom is not switched on in this script yet. In the Apps Script editor, ' +
+    'in the left sidebar: Services  ▸  + (Add a service)  ▸  Google Classroom API  ▸  Add. ' +
+    'Leave the identifier as "Classroom". Then Run ▸ setup once to authorise the new ' +
+    'permission, and open this window again.');
+}
+
 function getBatchImportData() {
+  _needClassroom();
   var courses = [], page = null;
   do {
     var r = Classroom.Courses.list({ courseStates: ['ACTIVE'], pageSize: 100, pageToken: page });
@@ -174,6 +187,7 @@ function getBatchImportData() {
 }
 
 function executeBatchImportAll(sels, jobId) {
+  _needClassroom();
   var results = [];
   sels.forEach(function (s) { results.push({ status: 'pending' }); });
   _publish(jobId, results, false);
@@ -261,6 +275,7 @@ function _guessClass(s) {
    assignment has to be made from here. One per lab; the id is kept in Labs.
    ============================================================ */
 function createAssignmentFor(labId, courseId) {
+  _needClassroom();
   var lab = _labById(labId);
   if (!lab) throw new Error('Unknown lab: ' + labId);
   var work = Classroom.Courses.CourseWork.create({
@@ -275,6 +290,7 @@ function createAssignmentFor(labId, courseId) {
 }
 
 function pushGradesFor(labId, courseId, courseWorkId) {
+  _needClassroom();
   var lab = _labById(labId);
   var roster = {}, page = null;
   do {
@@ -301,6 +317,38 @@ function pushGradesFor(labId, courseId, courseWorkId) {
     done++;
   });
   Logger.log('Graded ' + done + '. Not matched: ' + (missing.join(', ') || 'none'));
+}
+
+/* Tells you, in one box, which of the five set-up steps are done. */
+function checkSetup() {
+  var lines = [];
+  var idOk = SHEET_ID && SHEET_ID !== 'PASTE_YOUR_SHEET_ID_HERE';
+  lines.push((idOk ? '✅' : '❌') + '  SHEET_ID ' + (idOk ? 'is set' : 'is still the placeholder — paste your Sheet ID at the top of Code.gs'));
+
+  var openOk = false;
+  if (idOk) {
+    try { SpreadsheetApp.openById(SHEET_ID).getName(); openOk = true; } catch (e) {}
+    lines.push((openOk ? '✅' : '❌') + '  the Sheet ' + (openOk ? 'opens' : 'will not open — check the ID is the long code from the address bar'));
+  }
+
+  var clsOk = (typeof Classroom !== 'undefined' && Classroom && Classroom.Courses);
+  lines.push((clsOk ? '✅' : '❌') + '  Google Classroom ' + (clsOk ? 'is switched on' :
+    'is NOT switched on — left sidebar: Services ▸ + ▸ Google Classroom API ▸ Add (identifier "Classroom")'));
+
+  var n = 0;
+  if (clsOk) {
+    try { n = (Classroom.Courses.list({ courseStates: ['ACTIVE'], pageSize: 5 }).courses || []).length; lines.push('✅  it can see your courses (' + n + '+ active)'); }
+    catch (e) { lines.push('❌  Classroom is on but not authorised yet — Run ▸ setup once and accept the permission. (' + e + ')'); }
+  }
+
+  if (openOk) {
+    var have = Math.max(0, _sheet(T_STUDENTS).getLastRow() - 1);
+    lines.push('•  students imported so far: ' + have);
+    var built = LABS.filter(function (l) { return SpreadsheetApp.openById(SHEET_ID).getSheetByName(l.name); }).length;
+    lines.push('•  lab tabs built: ' + built + ' of ' + LABS.length);
+  }
+
+  SpreadsheetApp.getUi().alert('Biology Labs — set-up', lines.join('\n\n'), SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 /* ============================================================
