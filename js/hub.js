@@ -173,11 +173,28 @@
     var el = t.anchor && svg.querySelector('#' + t.anchor);
     if (!el) { tag.classList.remove('on'); return; }
     var o = el.getBoundingClientRect(), f = frame.getBoundingClientRect();
-    tag.style.left = (o.left + o.width / 2 - f.left) + 'px';
-    tag.style.top  = Math.max(12, o.top - f.top - 10) + 'px';   /* sit above the organ, never on it */
     tag.style.setProperty('--c', 'var(--g-' + t.sys + ')');
     tag.querySelector('.tag__pill').textContent = LANDMARK[t.sys] || t.title;
+    tag.classList.remove('tag--side', 'tag--left');
     tag.classList.add('on');
+
+    /* Above the organ is where it belongs — clear of what it names. But an organ near the
+       top of the plate, the brain or the thyroid, leaves no room there: the label was
+       pushed off the top of the frame and landed on the "specimen · human · anterior"
+       caption above it. When there is no room above, it goes beside the head instead. */
+    var h = tag.offsetHeight || 26, w = tag.offsetWidth || 130;
+    var above = o.top - f.top - 10;
+    if (above - h >= 4) {
+      tag.style.left = (o.left + o.width / 2 - f.left) + 'px';
+      tag.style.top  = above + 'px';
+      return;
+    }
+    var toRight = o.right - f.left + 12;
+    var fits = toRight + w <= f.width - 6;
+    tag.classList.add('tag--side');
+    if (!fits) tag.classList.add('tag--left');
+    tag.style.left = (fits ? toRight : (o.left - f.left - 12)) + 'px';
+    tag.style.top  = (o.top + o.height / 2 - f.top) + 'px';
   }
 
   function clear() {

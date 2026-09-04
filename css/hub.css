@@ -88,6 +88,11 @@ a{color:inherit;text-decoration:none}
   transition:opacity .22s ease,transform .22s ease;white-space:nowrap
 }
 .tag.on{opacity:1;transform:translate(-50%,-100%) scale(1)}
+/* beside the organ, when there is no room above it — see pinTag() in js/hub.js */
+.tag.tag--side{transform:translate(0,-50%) scale(.96)}
+.tag.on.tag--side{transform:translate(0,-50%) scale(1)}
+.tag.tag--side.tag--left{transform:translate(-100%,-50%) scale(.96)}
+.tag.on.tag--side.tag--left{transform:translate(-100%,-50%) scale(1)}
 .tag__pill{
   display:block;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;
   text-transform:uppercase;color:#08121A;background:var(--c);padding:5px 11px;border-radius:2px;
