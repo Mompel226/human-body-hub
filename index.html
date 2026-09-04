@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Biology Labs — the human body, IGCSE 0610</title>
+<meta name="theme-color" content="#0A141C">
+<meta name="description" content="Revision labs for Cambridge IGCSE Biology 0610, on a human body reconstructed from MRI. Pick a system and work through it.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🫀</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/hub.css?v=23">
+<style>
+  /* the 3D stage replaces the flat plate, everything else is the hub's */
+  #stage{position:absolute;inset:0;z-index:1}
+  #stage canvas{display:block;width:100%;height:100%;outline:none}
+  .plate__frame{width:100%}
+  .loading{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--chalk-dim);transition:opacity .5s
+  }
+  .loading.done{opacity:0;pointer-events:none}
+  .hint{
+    position:absolute;left:50%;bottom:6px;transform:translateX(-50%);z-index:3;
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:#7C93A3;white-space:nowrap
+  }
+  .toggles{position:absolute;top:16px;right:22px;z-index:3;display:flex;gap:6px}
+  .tg{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:#A9BECB;border:1px solid rgba(150,190,215,.3);border-radius:2px;padding:5px 9px;
+    background:rgba(10,20,28,.5);transition:.18s
+  }
+  .tg[aria-pressed="true"]{background:rgba(120,200,230,.18);color:#DCEAF2;border-color:rgba(150,215,240,.55)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <section class="plate" id="plate" aria-label="The human body in three dimensions">
+    <span class="plate__mark">Specimen · human · MRI-derived</span>
+
+    <div class="plate__frame" id="frame">
+      <div id="stage"></div>
+      <div class="loading" id="loading">Loading the body…</div>
+      <div class="toggles">
+        <button class="tg" id="tgSkin"  aria-pressed="true">Skin</button>
+        <button class="tg" id="tgBone"  aria-pressed="true">Skeleton</button>
+        <button class="tg" id="tgSpin"  aria-pressed="true">Turn</button>
+      </div>
+      <span class="hint">Drag to turn · scroll to zoom</span>
+    </div>
+
+    <p class="said" id="said"></p>
+  </section>
+
+  <section class="sheet">
+    <header class="masthead">
+      <h1>Biology <em>Labs</em></h1>
+      <span class="eyebrow">Cambridge IGCSE 0610 · the human body</span>
+      <a class="switch" href="plate.html">On a slow connection? Use the light version</a>
+    </header>
+
+    <p class="lede">The same nine topics, on a body reconstructed from MRI. Point at a lab
+       and its organs light up where they really sit; drag the body to look from anywhere.</p>
+
+    <div class="band"><span class="eyebrow">Open now</span></div>
+    <div id="heroSlot"></div>
+
+    <div class="band"><span class="eyebrow">Being built</span><span class="count" id="count"></span></div>
+    <ol class="queue" id="queue"></ol>
+
+    <p class="colophon">
+      Syllabus for 2026–2028 · Body reconstructed from
+      <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html" target="_blank" rel="noopener">BodyParts3D</a>,
+      © The Database Center for Life Science, licensed under CC Attribution-Share Alike 2.1 Japan
+    </p>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/topics.js?v=11"></script>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module" src="js/body3d.js?v=3"></script>
+</body>
+</html>

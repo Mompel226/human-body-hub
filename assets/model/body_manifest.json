@@ -1,0 +1,282 @@
+[
+ {
+  "system": "context",
+  "organ": "skin",
+  "name": "Skin",
+  "meshes": 1,
+  "tris": 26000
+ },
+ {
+  "system": "context",
+  "organ": "skeleton",
+  "name": "Skeleton",
+  "meshes": 227,
+  "tris": 70000
+ },
+ {
+  "system": "digestion",
+  "organ": "esophagus",
+  "name": "Oesophagus",
+  "meshes": 1,
+  "tris": 2500
+ },
+ {
+  "system": "digestion",
+  "organ": "stomach",
+  "name": "Stomach",
+  "meshes": 1,
+  "tris": 9000
+ },
+ {
+  "system": "digestion",
+  "organ": "duodenum",
+  "name": "Duodenum",
+  "meshes": 1,
+  "tris": 5000
+ },
+ {
+  "system": "digestion",
+  "organ": "jejunum",
+  "name": "Jejunum",
+  "meshes": 1,
+  "tris": 9000
+ },
+ {
+  "system": "digestion",
+  "organ": "ileum",
+  "name": "Ileum",
+  "meshes": 1,
+  "tris": 9000
+ },
+ {
+  "system": "digestion",
+  "organ": "colon",
+  "name": "Large intestine",
+  "meshes": 4,
+  "tris": 14000
+ },
+ {
+  "system": "digestion",
+  "organ": "rectum",
+  "name": "Rectum",
+  "meshes": 1,
+  "tris": 3500
+ },
+ {
+  "system": "digestion",
+  "organ": "liver",
+  "name": "Liver",
+  "meshes": 1,
+  "tris": 11000
+ },
+ {
+  "system": "digestion",
+  "organ": "gallbladder",
+  "name": "Gall bladder",
+  "meshes": 1,
+  "tris": 3500
+ },
+ {
+  "system": "digestion",
+  "organ": "pancreas",
+  "name": "Pancreas",
+  "meshes": 1,
+  "tris": 6000
+ },
+ {
+  "system": "circulation",
+  "organ": "heart",
+  "name": "Heart",
+  "meshes": 4,
+  "tris": 16000
+ },
+ {
+  "system": "circulation",
+  "organ": "aorta",
+  "name": "Aorta",
+  "meshes": 3,
+  "tris": 6000
+ },
+ {
+  "system": "circulation",
+  "organ": "venacava",
+  "name": "Venae cavae",
+  "meshes": 2,
+  "tris": 4000
+ },
+ {
+  "system": "circulation",
+  "organ": "pulmvessels",
+  "name": "Pulmonary vessels",
+  "meshes": 2,
+  "tris": 9000
+ },
+ {
+  "system": "circulation",
+  "organ": "bigarteries",
+  "name": "Major arteries",
+  "meshes": 10,
+  "tris": 5000
+ },
+ {
+  "system": "immunity",
+  "organ": "spleen",
+  "name": "Spleen",
+  "meshes": 1,
+  "tris": 5000
+ },
+ {
+  "system": "immunity",
+  "organ": "thymus",
+  "name": "Thymus",
+  "meshes": 2,
+  "tris": 6000
+ },
+ {
+  "system": "gas-exchange",
+  "organ": "trachea",
+  "name": "Trachea",
+  "meshes": 1,
+  "tris": 5000
+ },
+ {
+  "system": "gas-exchange",
+  "organ": "bronchi",
+  "name": "Bronchi",
+  "meshes": 1,
+  "tris": 9000
+ },
+ {
+  "system": "gas-exchange",
+  "organ": "lungR",
+  "name": "Right lung",
+  "meshes": 3,
+  "tris": 12000
+ },
+ {
+  "system": "gas-exchange",
+  "organ": "lungL",
+  "name": "Left lung",
+  "meshes": 2,
+  "tris": 10000
+ },
+ {
+  "system": "gas-exchange",
+  "organ": "diaphragm",
+  "name": "Diaphragm",
+  "meshes": 1,
+  "tris": 9000
+ },
+ {
+  "system": "respiration",
+  "organ": "quads",
+  "name": "Thigh muscle",
+  "meshes": 2,
+  "tris": 7000
+ },
+ {
+  "system": "respiration",
+  "organ": "calves",
+  "name": "Calf muscle",
+  "meshes": 4,
+  "tris": 7000
+ },
+ {
+  "system": "excretion",
+  "organ": "kidneys",
+  "name": "Kidneys",
+  "meshes": 2,
+  "tris": 9000
+ },
+ {
+  "system": "excretion",
+  "organ": "ureters",
+  "name": "Ureters",
+  "meshes": 2,
+  "tris": 3000
+ },
+ {
+  "system": "excretion",
+  "organ": "bladder",
+  "name": "Urinary bladder",
+  "meshes": 1,
+  "tris": 4000
+ },
+ {
+  "system": "excretion",
+  "organ": "urethra",
+  "name": "Urethra",
+  "meshes": 1,
+  "tris": 1186
+ },
+ {
+  "system": "excretion",
+  "organ": "renalvessels",
+  "name": "Renal vessels",
+  "meshes": 4,
+  "tris": 2500
+ },
+ {
+  "system": "coordination",
+  "organ": "brain",
+  "name": "Brain",
+  "meshes": 73,
+  "tris": 26000
+ },
+ {
+  "system": "coordination",
+  "organ": "eyes",
+  "name": "Eyes",
+  "meshes": 1,
+  "tris": 4000
+ },
+ {
+  "system": "coordination",
+  "organ": "opticnerves",
+  "name": "Optic nerves",
+  "meshes": 2,
+  "tris": 2500
+ },
+ {
+  "system": "coordination",
+  "organ": "pituitary",
+  "name": "Pituitary gland",
+  "meshes": 1,
+  "tris": 1500
+ },
+ {
+  "system": "coordination",
+  "organ": "adrenals",
+  "name": "Adrenal glands",
+  "meshes": 2,
+  "tris": 4000
+ },
+ {
+  "system": "reproduction",
+  "organ": "testes",
+  "name": "Testes",
+  "meshes": 4,
+  "tris": 1162
+ },
+ {
+  "system": "reproduction",
+  "organ": "prostate",
+  "name": "Prostate",
+  "meshes": 1,
+  "tris": 1754
+ },
+ {
+  "system": "reproduction",
+  "organ": "semvesicles",
+  "name": "Seminal vesicles",
+  "meshes": 2,
+  "tris": 2164
+ },
+ {
+  "system": "reproduction",
+  "organ": "penis",
+  "name": "Penis",
+  "meshes": 2,
+  "tris": 4000
+ }
+]
