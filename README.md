@@ -149,7 +149,10 @@ one place in the script, and the look follows from that:
 * Frozen headings, the name and class frozen while you scroll right, a filter row on every
   sheet, and a red-amber-green scale on the percentages.
 
-**🧪 Biology Labs ▸ Re-apply the formatting** puts all of that back after any manual change.
+**Importing a class does all of this for you** — it creates any tab that is missing, gives every
+new class its row in the Mastery grid, refreshes the dashboard and dresses the lot. There is
+nothing to press afterwards. **🧪 Biology Labs ▸ Tidy up** does the same on demand, if you have
+been rearranging things by hand.
 
 ### Setting it up
 
@@ -190,7 +193,8 @@ on and authorised, how many students are imported and how many lab tabs exist.
 **Import your classes.** 🧪 Biology Labs ▸ *Import students from Classroom…* It lists your
 active courses, guesses a class code from each name, and shows how many of that class you
 already have. Tick, check the codes, Import — each ticks green as it lands, and closing the
-window does not stop it. Run it again whenever someone joins: students are keyed on their
+window does not stop it. When it finishes it builds and formats the whole spreadsheet, so
+after your first import there is nothing else to set up. Run it again whenever someone joins: students are keyed on their
 school email, so it adds the new ones, moves anyone whose class changed, and never
 duplicates.
 
@@ -227,6 +231,19 @@ how long they had been working. Those last three are the point of Mastery:
 
 > A hand-in is matched to a student **by name**. If someone types their name differently from
 > the way it appears in Classroom, the refresh says so and names them, rather than guessing.
+
+### What is on the menu
+
+| 🧪 Biology Labs ▸ | What it does |
+|---|---|
+| **Import students from Classroom…** | the main one. Adds new students, and finishes by building and formatting everything |
+| **Check the set-up** | is the Sheet found, is Classroom switched on and authorised, how much is in here |
+| **Refresh everyone's progress** | re-reads the lab tabs into the dashboard |
+| **Tidy up** | rebuild anything missing and re-apply the formatting. The same as Run ▸ `setup` |
+| **Close / Open Mastery everywhere** | every class, every lab, in one go. For one class, use the Mastery grid |
+
+The first four also sit as tick-box buttons on the **Setup** tab, except the import — that
+one opens a window, which a spreadsheet button is not allowed to do.
 
 ### Marks into Google Classroom
 
@@ -354,12 +371,10 @@ function onOpen() {
     .addItem('🩺  Check the set-up', 'checkSetup')
     .addSeparator()
     .addItem('📊  Refresh everyone\'s progress', 'refreshDashboard')
-    .addItem('🎨  Re-apply the formatting', 'restyleAll')
+    .addItem('🎨  Tidy up  (rebuild anything missing, re-apply the formatting)', 'setup')
     .addSeparator()
     .addItem('🔒  Close Mastery everywhere', 'closeMasteryAll')
     .addItem('🔓  Open Mastery everywhere', 'openMasteryAll')
-    .addSeparator()
-    .addItem('⚙️  Rebuild the tabs (safe — keeps your data)', 'setup')
     .addToUi();
 }
 
@@ -627,8 +642,10 @@ function executeBatchImportAll(sels, jobId) {
   });
 
   _publish(jobId, results, true);
-  refreshDashboard();
-  _styleMastery();          /* a class that has just arrived gets its row */
+  /* An import is the first thing anyone does, so it leaves the spreadsheet finished:
+     every tab that should exist exists, every class has its row in the Mastery grid,
+     and the whole thing is dressed. Nothing else to press. */
+  _buildAndStyle();
   return results;
 }
 
@@ -775,14 +792,22 @@ function checkSetup() {
 /* ============================================================
    5. The tabs, and making them readable
    ============================================================ */
-function setup() {
+/* Everything the spreadsheet needs, in the right order. Safe to run at any time: it
+   creates only what is missing and never touches what is in the cells. Both the menu's
+   Tidy up and the end of an import call this, so importing a class leaves the whole
+   spreadsheet built, dressed and up to date — there is nothing else to press. */
+function _buildAndStyle() {
   _sheet(T_SETUP); _sheet(T_LABS); _sheet(T_STUDENTS); _masterySheet();
   LABS.forEach(function (l) { if (l.questions) _labSheet(l); });   /* built labs get a tab now */
-  var old = _ss().getSheetByName('Summary');
-  if (old && old.getLastRow() < 2) _ss().deleteSheet(old);  /* the Students tab is the summary now */
+  var gone = _ss().getSheetByName('Summary');
+  if (gone && gone.getLastRow() < 2) _ss().deleteSheet(gone);      /* the Students tab is the summary now */
   _installButtons();
   restyleAll();
   refreshDashboard();
+}
+
+function setup() {
+  _buildAndStyle();
   SpreadsheetApp.getActive().toast('Every tab is built and styled.', 'Biology Labs', 6);
 }
 
@@ -922,7 +947,7 @@ function _styleSetup() {
     ['Refresh everyone\'s progress', ''],
     ['Close Mastery in every lab', ''],
     ['Open Mastery in every lab', ''],
-    ['Re-apply the formatting', ''],
+    ['Tidy up — rebuild anything missing, re-apply the formatting', ''],
     ['', ''],
     ['If something looks wrong', '🧪 Biology Labs ▸ Check the set-up'],
     ['After editing the script', 'Deploy ▸ Manage deployments ▸ pencil ▸ Version: New version ▸ Deploy']
@@ -967,7 +992,7 @@ function onButtonTicked(e) {
     if (row === BTN_ROW.refresh) refreshDashboard();
     else if (row === BTN_ROW.close) closeMasteryAll();
     else if (row === BTN_ROW.open) openMasteryAll();
-    else if (row === BTN_ROW.restyle) restyleAll();
+    else if (row === BTN_ROW.restyle) setup();
   } catch (err) {
     SpreadsheetApp.getActive().toast('That button failed: ' + err, 'Biology Labs', 10);
   }

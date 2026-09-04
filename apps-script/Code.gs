@@ -68,12 +68,10 @@ function onOpen() {
     .addItem('🩺  Check the set-up', 'checkSetup')
     .addSeparator()
     .addItem('📊  Refresh everyone\'s progress', 'refreshDashboard')
-    .addItem('🎨  Re-apply the formatting', 'restyleAll')
+    .addItem('🎨  Tidy up  (rebuild anything missing, re-apply the formatting)', 'setup')
     .addSeparator()
     .addItem('🔒  Close Mastery everywhere', 'closeMasteryAll')
     .addItem('🔓  Open Mastery everywhere', 'openMasteryAll')
-    .addSeparator()
-    .addItem('⚙️  Rebuild the tabs (safe — keeps your data)', 'setup')
     .addToUi();
 }
 
@@ -341,8 +339,10 @@ function executeBatchImportAll(sels, jobId) {
   });
 
   _publish(jobId, results, true);
-  refreshDashboard();
-  _styleMastery();          /* a class that has just arrived gets its row */
+  /* An import is the first thing anyone does, so it leaves the spreadsheet finished:
+     every tab that should exist exists, every class has its row in the Mastery grid,
+     and the whole thing is dressed. Nothing else to press. */
+  _buildAndStyle();
   return results;
 }
 
@@ -489,14 +489,22 @@ function checkSetup() {
 /* ============================================================
    5. The tabs, and making them readable
    ============================================================ */
-function setup() {
+/* Everything the spreadsheet needs, in the right order. Safe to run at any time: it
+   creates only what is missing and never touches what is in the cells. Both the menu's
+   Tidy up and the end of an import call this, so importing a class leaves the whole
+   spreadsheet built, dressed and up to date — there is nothing else to press. */
+function _buildAndStyle() {
   _sheet(T_SETUP); _sheet(T_LABS); _sheet(T_STUDENTS); _masterySheet();
   LABS.forEach(function (l) { if (l.questions) _labSheet(l); });   /* built labs get a tab now */
-  var old = _ss().getSheetByName('Summary');
-  if (old && old.getLastRow() < 2) _ss().deleteSheet(old);  /* the Students tab is the summary now */
+  var gone = _ss().getSheetByName('Summary');
+  if (gone && gone.getLastRow() < 2) _ss().deleteSheet(gone);      /* the Students tab is the summary now */
   _installButtons();
   restyleAll();
   refreshDashboard();
+}
+
+function setup() {
+  _buildAndStyle();
   SpreadsheetApp.getActive().toast('Every tab is built and styled.', 'Biology Labs', 6);
 }
 
@@ -636,7 +644,7 @@ function _styleSetup() {
     ['Refresh everyone\'s progress', ''],
     ['Close Mastery in every lab', ''],
     ['Open Mastery in every lab', ''],
-    ['Re-apply the formatting', ''],
+    ['Tidy up — rebuild anything missing, re-apply the formatting', ''],
     ['', ''],
     ['If something looks wrong', '🧪 Biology Labs ▸ Check the set-up'],
     ['After editing the script', 'Deploy ▸ Manage deployments ▸ pencil ▸ Version: New version ▸ Deploy']
@@ -681,7 +689,7 @@ function onButtonTicked(e) {
     if (row === BTN_ROW.refresh) refreshDashboard();
     else if (row === BTN_ROW.close) closeMasteryAll();
     else if (row === BTN_ROW.open) openMasteryAll();
-    else if (row === BTN_ROW.restyle) restyleAll();
+    else if (row === BTN_ROW.restyle) setup();
   } catch (err) {
     SpreadsheetApp.getActive().toast('That button failed: ' + err, 'Biology Labs', 10);
   }
