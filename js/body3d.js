@@ -306,6 +306,12 @@ document.querySelectorAll('.hero,.q__btn').forEach(el =>
 
 /* Back to the whole body. With panning switched on you can wander off, and on a phone
    there is no obvious way back — this is it. */
+/* "Scroll to zoom" is a mouse instruction. On a touch screen say what actually works. */
+const hintEl = document.querySelector('.hint');
+if (hintEl && matchMedia('(hover: none)').matches) {
+  hintEl.textContent = 'Drag to turn · pinch to zoom · two fingers to move';
+}
+
 const homeBtn = document.getElementById('homeBtn');
 if (homeBtn) homeBtn.addEventListener('click', e => {
   e.stopPropagation();
