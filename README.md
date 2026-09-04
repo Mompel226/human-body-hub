@@ -337,6 +337,9 @@ Every hand-in shows the student a **completion code** — `DL-3CL9-Q3MP`. It is 
 their name, class, score and the lab, and **nothing about it is stored anywhere**. Paste one
 into the *Check a completion code* cell on the **Setup** tab and tick the box beside it.
 
+Clear that cell and the answer clears with it, ready for the next one — an answer belongs to
+the code that produced it, and a stale one you cannot tell is stale is worse than none.
+
 Because nothing is stored, the only way to read a code is to try the possibilities against a
 bounded list of names — and the only such list is your **Students** tab. So:
 
@@ -1161,6 +1164,7 @@ function _styleSetup() {
   sh.getRange(CODE_ROW, 2).setBackground('#FFFFFF').setFontColor('#8A8F8A').setFontStyle('italic')
     .setBorder(true, true, true, true, false, false, '#C9A227', SpreadsheetApp.BorderStyle.SOLID);
   sh.getRange(CODE_ROW + 1, 2).setFontColor('#3D7A54').setFontWeight('bold');
+  sh.getRange(CODE_ROW + 1, 2).setValue('');       /* no answer until a code is checked */
   sh.setHiddenGridlines(true);
 }
 
@@ -1177,7 +1181,19 @@ function _installButtons() {
 function onButtonTicked(e) {
   if (!e || !e.range) return;
   var sh = e.range.getSheet();
-  if (sh.getName() !== T_SETUP || e.range.getColumn() !== 3) return;
+  if (sh.getName() !== T_SETUP) return;
+
+  /* An answer belongs to the code that produced it. Clear or change the code and the answer
+     below it has to go, or the next person to look reads an answer to a question nobody
+     asked — and you cannot tell whether it is stale until you have already believed it. */
+  if (e.range.getRow() === CODE_ROW && e.range.getColumn() === 2) {
+    var typed = String(e.range.getValue() || '').trim();
+    _codeAnswer(typed ? '↑  Tick the box to check this code.' : '');
+    if (!typed) _btnSays(BTN_ROW.code, '');
+    return;
+  }
+
+  if (e.range.getColumn() !== 3) return;
   if (e.range.getValue() !== true) return;
   var row = e.range.getRow();
 
@@ -1206,6 +1222,17 @@ function onButtonTicked(e) {
 
 function _hhmm(d) {
   return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+}
+
+/* The answer under the code box. Grey while it is only a prompt, green when it is a real
+   answer, so the two never look alike. */
+function _codeAnswer(text) {
+  var sh = _sheet(T_SETUP);
+  var hint = /^↑/.test(text);
+  sh.getRange(CODE_ROW + 1, 2).setValue(text)
+    .setFontColor(hint ? '#8A8F8A' : '#3D7A54')
+    .setFontWeight(hint ? 'normal' : 'bold')
+    .setFontStyle(hint ? 'italic' : 'normal');
 }
 
 /* The line beside a button. It stays until that button is used again. */
@@ -1483,8 +1510,7 @@ function _since(iso) {
 function checkCode() {
   var sh = _sheet(T_SETUP);
   var code = String(sh.getRange(CODE_ROW, 2).getValue() || '').trim().toUpperCase();
-  var out = sh.getRange(CODE_ROW + 1, 2);
-  var say = function (t) { out.setValue(t); SpreadsheetApp.getActive().toast(t, 'Completion code', 8); };
+  var say = function (t) { _codeAnswer(t); SpreadsheetApp.getActive().toast(t, 'Completion code', 30); };
 
   if (!/^[A-Z]{2}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
     return say('Paste a completion code into the cell above, then tick the box. They look like DL-3CL9-Q3MP.');

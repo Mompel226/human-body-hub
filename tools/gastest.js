@@ -318,6 +318,31 @@ ok &= run('a Google name seen on a hand-in is remembered and tried', () => {
   if (!/Bo Kim As Google Spells It/.test(answer)) throw new Error(answer);
   if (!/77\/113/.test(answer)) throw new Error(answer);
 });
+ok &= run('clearing the code clears the answer under it', () => {
+  const sh = setupSheet();
+  askAbout(_code('digestion-lab', 'Ana Lee', '', '113/113'));
+  if (!String(sh.getRange(CODE_ROW + 1, 2).getValue())) throw new Error('no answer to clear');
+  sh.getRange(CODE_ROW, 2).setValue('');                       /* he deletes the code */
+  onButtonTicked({ range: sh.getRange(CODE_ROW, 2) });
+  const left = String(sh.getRange(CODE_ROW + 1, 2).getValue());
+  if (left) throw new Error('the old answer is still sitting there: ' + left);
+});
+ok &= run('typing a new code replaces the old answer with a prompt', () => {
+  const sh = setupSheet();
+  askAbout(_code('digestion-lab', 'Ana Lee', '', '113/113'));
+  sh.getRange(CODE_ROW, 2).setValue('DL-ZZZZ-ZZZZ');
+  onButtonTicked({ range: sh.getRange(CODE_ROW, 2) });
+  const now = String(sh.getRange(CODE_ROW + 1, 2).getValue());
+  if (/Ana Lee/.test(now)) throw new Error('still showing the answer to the previous code');
+  if (!/Tick the box/.test(now)) throw new Error('no prompt to check it: ' + now);
+});
+ok &= run('editing anything else on Setup is left alone', () => {
+  const sh = setupSheet();
+  askAbout(_code('digestion-lab', 'Ana Lee', '', '113/113'));
+  const before = String(sh.getRange(CODE_ROW + 1, 2).getValue());
+  onButtonTicked({ range: sh.getRange(URL_ROW, 2) });          /* he edits the web app URL */
+  if (String(sh.getRange(CODE_ROW + 1, 2).getValue()) !== before) throw new Error('an unrelated edit wiped it');
+});
 ok &= run('the code button is wired to something that exists', () => {
   onButtonTicked({ range: setupSheet().getRange(BTN_ROW.code, 3) });
 });
