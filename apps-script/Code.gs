@@ -7,8 +7,9 @@
  *   • Collects hand-ins from every Biology Lab into one Sheet, a tab per lab.
  *   • Imports your Google Classroom rosters, so the marks sit next to real names
  *     and classes. Re-run it whenever someone joins: it adds, never duplicates.
- *   • Serves each lab's "Mastery open" switch, so you can close Mastery during a
- *     test from a checkbox here, with no redeploy of the site.
+ *   • Keeps only your own students: a hand-in is recorded when the Google account that
+ *     signed in is on your roster, and ignored when it is not. The labs are public, so
+ *     anyone may use them — their work simply does not land here.
  *   • Formats every tab so it is readable: nothing truncated, nothing too narrow,
  *     frozen headers, filters, banding. Re-apply it any time from the menu.
  *
@@ -47,14 +48,25 @@ var LABS = [
   { id:'reproduction-lab',  name:'Reproduction',     topic:'16 · Reproduction',         questions:0 }
 ];
 
-var T_SETUP = 'Setup', T_LABS = 'Labs', T_STUDENTS = 'Students', T_REJECTED = 'Rejected', T_MASTERY = 'Mastery';
-var EVERYONE = '(everyone)';
+var T_SETUP = 'Setup', T_LABS = 'Labs', T_STUDENTS = 'Students', T_REJECTED = 'Rejected';
 
-/* Optional. Leave '' and anyone who finds the URL can post a row. Set a word here AND the
-   same word as `submitToken` in each lab's js/config.js, and a post without it is refused.
-   The labs are public sites, so the word is readable by anyone who looks at config.js — it
-   stops drive-by posting to a URL somebody stumbled on, not a student who reads the source. */
-var SUBMIT_TOKEN = '';
+/* ---- Signing in ----------------------------------------------------------
+   The labs are public web pages: anyone in the world can open one, work through it and
+   press Hand in. That is the point — but their work must not land in your spreadsheet.
+   So a hand-in is kept only when the Google account that signed in is on your Students
+   tab. Everyone else gets their completion code on screen and nothing is written down.
+
+   To get a CLIENT_ID (about five minutes, free):
+     console.cloud.google.com ▸ pick or make a project ▸ APIs & Services ▸ Credentials
+     ▸ Create credentials ▸ OAuth client ID ▸ Web application
+     Authorised JavaScript origins:  https://mompel226.github.io
+     Create, then copy the Client ID (it ends .apps.googleusercontent.com) into BOTH
+     places: here, and googleClientId in every lab's js/config.js.
+
+   Leave it empty and nothing is recorded at all — the labs still work, and everyone gets
+   a completion code to hand in by other means.
+   -------------------------------------------------------------------------- */
+var CLIENT_ID = '';
 
 /* House colours, so the Sheet looks like the labs it collects. */
 var INK = '#14572B', INK_SOFT = '#E4EFE7', LINE = '#C9D8CD', WARN = '#B8860B', BAD = '#B03A2E';
@@ -69,9 +81,6 @@ function onOpen() {
     .addSeparator()
     .addItem('📊  Refresh everyone\'s progress', 'refreshDashboard')
     .addItem('🎨  Tidy up  (rebuild anything missing, re-apply the formatting)', 'setup')
-    .addSeparator()
-    .addItem('🔒  Close Mastery everywhere', 'closeMasteryAll')
-    .addItem('🔓  Open Mastery everywhere', 'openMasteryAll')
     .addToUi();
 }
 
@@ -82,42 +91,44 @@ function doPost(e) {
   try {
     var d = JSON.parse(e.postData.contents);
     var lab = _labById(String(d.app || ''));
-    if (!lab) return _text('unknown lab: ' + d.app);
-    if (SUBMIT_TOKEN && String(d.token || '') !== SUBMIT_TOKEN) return _text('refused');
+    if (!lab) return _text('unknown lab');
 
-    var name  = String(d.name || '').trim().slice(0, 80);
-    var form  = String(d.form || '').trim().slice(0, 20);
-    var mode  = String(d.mode || '').trim().slice(0, 20);
-    var score = Number(d.score) || 0;
-    var total = Number(d.total) || 0;
+    /* Only this teacher's students are recorded. Anyone else in the world who works through
+       a lab and presses Hand in gets their completion code and leaves no trace here at all —
+       no row, no name, no email, nowhere. */
+    if (!CLIENT_ID) return _text('not recorded: sign-in is not set up');
+    var who = _whoIs(d.token);
+    if (!who) return _text('not recorded: not signed in');
+    var student = _studentOf(who.email);
+    if (!student) return _text('not recorded: not on this class list');
 
-    var genuine = (_code(lab.id, name, form, score + '/' + total) === String(d.code || ''));
-    var flags = [];
-    if (lab.questions && total !== lab.questions) flags.push('NOT ALL QUESTIONS');
-    if (d.complete === false) flags.push('PROGRESS — not finished');
+    var name = student.name, form = student.cls;
+    var score = Number(d.score) || 0, total = Number(d.total) || 0;
 
-    /* Anything that does not add up is kept, but not among the real work: a wrong
-       completion code, a score above the total, or numbers outside what the lab can
-       produce goes to the Rejected tab where you can look at it and delete it. */
+    /* the code was made in the page from what it showed, so it is checked against that */
+    var genuine = (_code(lab.id, String(d.name || '').trim(), String(d.form || '').trim(),
+                         score + '/' + total) === String(d.code || ''));
     var wrong = [];
     if (!genuine) wrong.push('code does not match');
     if (score > total) wrong.push('score above the total');
     if (total < 0 || total > 1000) wrong.push('impossible total');
-    if (name.length < 2) wrong.push('no name');
     if (wrong.length) {
-      _reject(lab, [new Date(), lab.id, name, form, mode, score, total, d.code || '',
+      _reject(lab, [new Date(), lab.id, name, form, score, total, d.code || '',
                     wrong.join('; '), JSON.stringify(d).slice(0, 2000)]);
       return _text('rejected: ' + wrong.join('; '));
     }
 
+    var flags = [];
+    if (lab.questions && total !== lab.questions) flags.push('NOT ALL QUESTIONS');
+    if (d.complete === false) flags.push('PROGRESS — not finished');
+
     var sh = _labSheet(lab);
     sh.appendRow([
-      new Date(), name, form, mode,
+      new Date(), name, form,
       score, total, total ? score / total : 0,
       d.complete === false ? 'progress' : 'complete',
       Number(d.checks) || '', Number(d.firstTime) || '', _since(d.from),
-      d.code || '', 'ok', flags.join('; '),
-      _stations(d.stations)
+      d.code || '', flags.join('; '), _stations(d.stations)
     ]);
     _tidyLastRow(sh);
     return _text('recorded');
@@ -127,18 +138,61 @@ function doPost(e) {
 }
 
 /* Junk, and anything that does not verify, lands here instead of in a lab's tab. */
+/* Who is this? Google signed the token; we ask Google to check its own signature. The
+   answer is cached briefly so two hand-ins in a row do not ask twice. Anything we cannot
+   stand behind comes back null. */
+function _whoIs(idToken) {
+  if (!CLIENT_ID || !idToken) return null;
+  var cache = CacheService.getScriptCache();
+  var key = 'ID_' + Utilities.base64EncodeWebSafe(
+              Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, idToken)).slice(0, 40);
+  var hit = cache.get(key);
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+
+  var res;
+  try {
+    res = UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' +
+                            encodeURIComponent(idToken), { muteHttpExceptions: true });
+  } catch (e) { return null; }
+  if (res.getResponseCode() !== 200) return null;
+
+  var t;
+  try { t = JSON.parse(res.getContentText()); } catch (e) { return null; }
+  if (String(t.aud) !== CLIENT_ID) return null;               /* a token for somebody else's app */
+  if (Number(t.exp) * 1000 < Date.now()) return null;         /* expired */
+  if (String(t.email_verified) !== 'true') return null;
+
+  var who = { email: String(t.email || '').toLowerCase(), name: String(t.name || '') };
+  cache.put(key, JSON.stringify(who), 240);
+  return who;
+}
+
+/* What the roster knows about them — and whether they are on it at all. */
+function _studentOf(email) {
+  if (!email) return null;
+  var sh = _sheet(T_STUDENTS), last = sh.getLastRow();
+  if (last < 2) return null;
+  var EMAIL_COL = 3 + LABS.length + 2;
+  var vals = sh.getRange(2, 1, last - 1, EMAIL_COL).getValues();
+  for (var i = 0; i < vals.length; i++) {
+    if (String(vals[i][EMAIL_COL - 1] || '').toLowerCase() === email) {
+      return { name: String(vals[i][0] || ''), cls: String(vals[i][1] || '').toUpperCase() };
+    }
+  }
+  return null;
+}
+
 function _reject(lab, row) {
   var ss = _ss(), sh = ss.getSheetByName(T_REJECTED);
   if (!sh) {
     sh = ss.insertSheet(T_REJECTED);
-    sh.getRange(1, 1, 1, 10).setValues([['When', 'Lab', 'Name', 'Class', 'Mode', 'Score',
-                                         'Out of', 'Code', 'Why it was refused', 'What was sent']]);
+    sh.getRange(1, 1, 1, 9).setValues([['When', 'Lab', 'Name', 'Class', 'Score',
+                                        'Out of', 'Code', 'Why it was refused', 'What was sent']]);
     _dress2(sh, [
       { h:'When', w:150, fmt:'dd MMM, HH:mm', note:'When it arrived.' },
       { h:'Lab', w:140, note:'Which lab it claimed to come from.' },
       { h:'Name', w:190, note:'The name it carried.' },
       { h:'Class', w:80, align:'center' },
-      { h:'Mode', w:90, align:'center' },
       { h:'Score', w:76, align:'center', fmt:'0' },
       { h:'Out of', w:76, align:'center', fmt:'0' },
       { h:'Code', w:120, align:'center' },
@@ -150,125 +204,13 @@ function _reject(lab, row) {
 }
 
 /* ============================================================
-   2. The Mastery switch, per lab
-   The site asks on load, when the tab is brought back, and every few minutes.
+   2. The endpoint — a lab checks it is alive; hand-ins arrive by POST
    ============================================================ */
-function doGet(e) {
-  var q = (e && e.parameter) || {};
-  if (q.q === 'gate') {
-    var g = _gateFor(String(q.app || ''), String(q.cls || '').trim().toUpperCase());
-    var body = JSON.stringify(g);
-    if (q.callback) return _js(q.callback + '(' + body + ');');
-    return _json(body);
-  }
+function doGet() {
   return _text('Biology Labs endpoint is running.');
 }
 
-/* Mastery is open or closed per class, per lab — one class can be sitting a test while
-   the rest are doing homework. The Mastery tab is that grid; the (everyone) row is the
-   default for any class not listed.
 
-   If a class is not known (the page has not been told which class the reader is in) and
-   some class is closed for this lab, the answer is "closed, and ask them which class they
-   are in" — otherwise closing 9A would be undone by a 9A student who never said so. */
-function _gateFor(labId, cls) {
-  var lab = _labById(labId);
-  if (!lab) return { masteryOpen: true, note: '', needClass: false };
-  var sh = _sheet(T_MASTERY);
-  var vals = sh.getDataRange().getValues();
-  if (vals.length < 2) return { masteryOpen: true, note: _noteFor(labId), needClass: false };
-
-  var col = -1;
-  for (var c = 1; c < vals[0].length; c++) if (String(vals[0][c]) === lab.name) { col = c; break; }
-  if (col < 0) return { masteryOpen: true, note: _noteFor(labId), needClass: false };
-
-  var everyone = true, mine = null, anyClosed = false;
-  for (var r = 1; r < vals.length; r++) {
-    var who = String(vals[r][0] || '').trim();
-    var open = vals[r][col] !== false;
-    if (who === EVERYONE) everyone = open;
-    else if (who) {
-      if (!open) anyClosed = true;
-      if (cls && who.toUpperCase() === cls) mine = open;
-    }
-  }
-  if (mine !== null) return { masteryOpen: mine, note: _noteFor(labId), needClass: false };
-  if (!cls && anyClosed) return { masteryOpen: false, note: _noteFor(labId), needClass: true };
-  return { masteryOpen: everyone, note: _noteFor(labId), needClass: false };
-}
-function _noteFor(labId) {
-  var rows = _sheet(T_LABS).getDataRange().getValues();
-  for (var i = 1; i < rows.length; i++) if (String(rows[i][0]) === labId) return String(rows[i][3] || '');
-  return '';
-}
-
-function closeMasteryAll() { _setMasteryAll(false); }
-function openMasteryAll()  { _setMasteryAll(true); }
-function _setMasteryAll(open) {
-  var sh = _masterySheet(), rows = sh.getLastRow() - 1, cols = LABS.length;
-  if (rows > 0) sh.getRange(2, 2, rows, cols).setValue(open);
-  SpreadsheetApp.getActive().toast(
-    open ? 'Mastery is open for every class, in every lab.'
-         : 'Mastery is closed for every class, in every lab.', 'Biology Labs', 5);
-}
-
-/* The grid: a row per class (plus (everyone)), a column per lab, a checkbox in each.
-   Classes appear here as soon as they are imported. */
-function _masterySheet() {
-  var ss = _ss(), sh = ss.getSheetByName(T_MASTERY);
-  if (!sh) {
-    sh = ss.insertSheet(T_MASTERY);
-    sh.getRange(1, 1, 1, 1 + LABS.length)
-      .setValues([['Class'].concat(LABS.map(function (l) { return l.name; }))]);
-    sh.getRange(2, 1).setValue(EVERYONE);
-    sh.getRange(2, 2, 1, LABS.length).insertCheckboxes().setValue(true);
-  }
-  /* add any class that has appeared since */
-  var have = {}, last = sh.getLastRow();
-  if (last > 1) sh.getRange(2, 1, last - 1, 1).getValues().forEach(function (r) {
-    have[String(r[0] || '').trim().toUpperCase()] = true;
-  });
-  var add = _classList().filter(function (c) { return !have[c]; });
-  if (add.length) {
-    var at = sh.getLastRow() + 1;
-    sh.getRange(at, 1, add.length, 1).setValues(add.map(function (c) { return [c]; }));
-    sh.getRange(at, 2, add.length, LABS.length).insertCheckboxes().setValue(true);
-  }
-  return sh;
-}
-
-function _styleMastery() {
-  var sh = _masterySheet();
-  var built = {};
-  LABS.forEach(function (l) { built[l.id] = !!_ss().getSheetByName(l.name); });
-  var cols = [{ h:'Class', w:130, bold:true,
-    note:'One row per class, and (everyone) for any class not listed. Classes appear here when you import them.' }];
-  LABS.forEach(function (l) {
-    cols.push({ h:l.name, w:_wide(l.name, 108), align:'center',
-      head: built[l.id] ? HDR_AUTO : HDR_SOON, edit:true,
-      note:'Ticked — Mastery is open for that class in ' + l.name + '.\nUnticked — that class gets Test only, and is told why.\n\nA class row wins over (everyone).' });
-  });
-  var rows = _dress2(sh, cols, { freezeCols: 1, tab:'#8A6A12' });
-  if (!rows) return;
-  sh.getRange(2, 2, rows, LABS.length).insertCheckboxes();
-  sh.getRange(2, 1, 1, 1 + LABS.length).setBackground('#EFF5F0').setFontWeight('bold');
-  sh.setConditionalFormatRules([
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=B2=FALSE')
-      .setBackground('#FCE8E6')
-      .setRanges([sh.getRange(2, 2, rows, LABS.length)]).build()
-  ]);
-}
-
-/* ============================================================
-   3. Importing the rosters from Google Classroom
-   The dialog is ClassroomImport.html. It fires one long-running call and polls
-   for progress, so closing the window does not interrupt the import.
-   ============================================================ */
-function showClassroomImport() {
-  var html = HtmlService.createHtmlOutputFromFile('ClassroomImport')
-    .setWidth(880).setHeight(560);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Import students from Google Classroom');
-}
 
 /* "Classroom is not defined" is the advanced service not being switched on. Say so in
    words a teacher can act on, rather than letting a ReferenceError reach the dialog. */
@@ -340,8 +282,8 @@ function executeBatchImportAll(sels, jobId) {
 
   _publish(jobId, results, true);
   /* An import is the first thing anyone does, so it leaves the spreadsheet finished:
-     every tab that should exist exists, every class has its row in the Mastery grid,
-     and the whole thing is dressed. Nothing else to press. */
+     every tab that should exist exists and the whole thing is dressed. Nothing else to
+     press. */
   _buildAndStyle();
   return results;
 }
@@ -494,7 +436,7 @@ function checkSetup() {
    Tidy up and the end of an import call this, so importing a class leaves the whole
    spreadsheet built, dressed and up to date — there is nothing else to press. */
 function _buildAndStyle() {
-  _sheet(T_SETUP); _sheet(T_LABS); _sheet(T_STUDENTS); _masterySheet();
+  _sheet(T_SETUP); _sheet(T_LABS); _sheet(T_STUDENTS);
   LABS.forEach(function (l) { if (l.questions) _labSheet(l); });   /* built labs get a tab now */
   var gone = _ss().getSheetByName('Summary');
   if (gone && gone.getLastRow() < 2) _ss().deleteSheet(gone);      /* the Students tab is the summary now */
@@ -509,7 +451,7 @@ function setup() {
 }
 
 function restyleAll() {
-  _styleSetup(); _styleLabs(); _styleStudents(); _styleMastery();
+  _styleSetup(); _styleLabs(); _styleStudents();
   LABS.forEach(function (l) {
     var sh = _ss().getSheetByName(l.name);
     if (sh) _styleLab(sh);
@@ -529,7 +471,7 @@ function restyleAll() {
            edit:true (yours to change), list:[dropdown options], hide:true }
    ------------------------------------------------------------ */
 /* The palette. Ordinary numbers stay quiet; strong colour is kept for the few things that
-   actually need looking at — a low score, a refused hand-in, a class whose Mastery is shut.
+   actually need looking at — a low score, a refused hand-in.
    (Dashboard convention: a muted base, high contrast reserved for the exception.) */
 var HDR_AUTO = '#14572B';     /* filled in for you */
 var HDR_EDIT = '#8A6A12';     /* yours to change  */
@@ -641,8 +583,8 @@ function _classList() {
 /* The Setup tab is where you press things: the checkboxes are buttons — tick one and it
    runs, then unticks itself. These two constants are the rows those things are written
    on, and must match the `lines` array inside _styleSetup. */
-var URL_ROW = 11;
-var BTN_ROW = { refresh: 17, close: 18, open: 19, restyle: 20 };
+var URL_ROW = 12;
+var BTN_ROW = { refresh: 18, restyle: 19 };
 
 function _styleSetup() {
   var sh = _sheet(T_SETUP);
@@ -657,10 +599,11 @@ function _styleSetup() {
     ['Biology Labs', 'one spreadsheet for every lab'],
     ['', ''],
     ['Students', 'every student, every lab, best score so far. Filter the Class column to see one class.'],
-    ['Mastery', 'the switch, per class and per lab. Untick a box and that class gets Test only.'],
-    ['Labs', 'one row per lab: the message shown when Mastery is closed, and how many questions it has.'],
-    ['Digestion, Circulation, …', 'every hand-in for that lab. A tab appears the first time the lab is used.'],
-    ['Rejected', 'anything that did not add up, kept out of the real tabs.'],
+    ['Labs', 'one row per lab: how many questions it has, and how many hand-ins it has had.'],
+    ['Digestion, Circulation, …', 'every hand-in for that lab. A tab appears the first time that lab is used.'],
+    ['Rejected', 'a hand-in from one of your students whose numbers did not add up.'],
+    ['', ''],
+    ['Only your students land here', 'a hand-in is kept when the Google account that signed in is on the Students tab. The labs are public, so anyone in the world may use them — their work is not recorded anywhere.'],
     ['', ''],
     ['Reading a heading', 'dark green = filled in for you.   ✎ amber = yours to change.   Hover any heading to see what it is for.'],
     ['', ''],
@@ -670,9 +613,7 @@ function _styleSetup() {
     ['', ''],
     ['Import students from Classroom', 'on the 🧪 Biology Labs menu (it opens a window, so it cannot be a checkbox)'],
     ['', ''],
-    ['Refresh everyone\'s progress', ''],
-    ['Close Mastery in every lab', ''],
-    ['Open Mastery in every lab', ''],
+    ["Refresh everyone's progress", ''],
     ['Tidy up — rebuild anything missing, re-apply the formatting', ''],
     ['', ''],
     ['If something looks wrong', '🧪 Biology Labs ▸ Check the set-up'],
@@ -682,7 +623,7 @@ function _styleSetup() {
   sh.getRange('A1').setFontSize(17).setFontWeight('bold').setFontColor(INK);
   sh.getRange('B1').setFontColor('#6B7B6F');
   sh.getRange(3, 1, lines.length - 2, 1).setFontWeight('bold').setFontColor(INK);
-  sh.getRange(13, 1).setFontSize(13);
+  sh.getRange(14, 1).setFontSize(13);
   sh.getRange(1, 1, lines.length, 2).setVerticalAlignment('middle').setWrap(true);
   sh.setColumnWidth(1, 260); sh.setColumnWidth(2, 720); sh.setColumnWidth(3, 60);
   for (var r = 1; r <= lines.length; r++) sh.setRowHeight(r, r === 1 ? 34 : 24);
@@ -693,7 +634,7 @@ function _styleSetup() {
     sh.getRange(r, 3).insertCheckboxes().setValue(false).setHorizontalAlignment('center');
     sh.getRange(r, 1, 1, 3).setBackground('#EFF5F0');
   });
-  sh.getRange(BTN_ROW.refresh, 1, 4, 1).setFontColor(INK);
+  sh.getRange(BTN_ROW.refresh, 1, 2, 1).setFontColor(INK);
   sh.setHiddenGridlines(true);
 }
 
@@ -716,8 +657,6 @@ function onButtonTicked(e) {
     var row = e.range.getRow();
     e.range.setValue(false);
     if (row === BTN_ROW.refresh) refreshDashboard();
-    else if (row === BTN_ROW.close) closeMasteryAll();
-    else if (row === BTN_ROW.open) openMasteryAll();
     else if (row === BTN_ROW.restyle) setup();
   } catch (err) {
     SpreadsheetApp.getActive().toast('That button failed: ' + err, 'Biology Labs', 10);
@@ -733,7 +672,7 @@ function _styleStudents() {
     { h:'Name', w:210, edit:true,
       note:'The student, as Google Classroom spells it. A hand-in is matched to this by name, so correct a spelling here if a hand-in did not find its student.' },
     { h:'Class', w:88, align:'center', bold:true, edit:true, list:_classList(),
-      note:'Which class they are in. Used by the filter, by the Mastery grid, and written into every hand-in.' }
+      note:'Which class they are in. Used by the filter, and shown on every hand-in.' }
   ];
   LABS.forEach(function (l, i) {
     cols.push({ h:l.name, w:_wide(l.name, 108), align:'center', fmt:'0%', group: i === 0,
@@ -789,9 +728,9 @@ function refreshDashboard() {
   LABS.forEach(function (lab, c) {
     var tab = _ss().getSheetByName(lab.name);
     if (!tab || tab.getLastRow() < 2) return;
-    tab.getRange(2, 1, tab.getLastRow() - 1, 7).getValues().forEach(function (r) {
+    tab.getRange(2, 1, tab.getLastRow() - 1, 6).getValues().forEach(function (r) {
       var k = _tidy(r[1]); if (!k) return;
-      var pc = Number(r[6]) || 0;
+      var pc = Number(r[5]) || 0;
       if (!(k in rowOf)) { unmatched[r[1]] = true; return; }
       var i = rowOf[k];
       if (grid[i][c] === '' || pc > grid[i][c]) grid[i][c] = pc;
@@ -823,8 +762,6 @@ function _styleLabs() {
     { h:'Lab id', w:170, note:'What the lab\'s own page sends. Do not change it — it has to match js/config.js in that lab.' },
     { h:'Lab', w:130, note:'The name of this lab\'s tab in this spreadsheet.' },
     { h:'Topic', w:200, note:'Which IGCSE topic it covers.' },
-    { h:'Message when Mastery is closed', w:380, wrap:true, edit:true,
-      note:'What a student sees when Mastery is closed. Say something human — "Mastery is closed, this is your test".' },
     { h:'Questions', w:100, align:'center', fmt:'0', edit:true,
       note:'How many questions that lab has. Used to flag a hand-in that does not cover them all. Fill it in when a lab is built.' },
     { h:'Hand-ins', w:100, align:'center', fmt:'0', note:'How many hand-ins that lab has had. Counted for you.' }
@@ -836,18 +773,16 @@ function _styleLab(sh) {
     { h:'When', w:150, fmt:'dd MMM, HH:mm', note:'When it was handed in.' },
     { h:'Name', w:200, note:'As the student typed it. If this does not match the Students tab, the dashboard will say so.' },
     { h:'Class', w:80, align:'center', note:'The class they chose when handing in.' },
-    { h:'Mode', w:90, align:'center', list:['mastery', 'test'],
-      note:'mastery — unlimited checks, never shown the answer.\ntest — one attempt per question.' },
     { h:'Score', w:76, align:'center', fmt:'0', group:true, note:'How many they got right.' },
     { h:'Out of', w:76, align:'center', fmt:'0', note:'How many questions the lab asked.' },
     { h:'%', w:70, align:'center', fmt:'0%', note:'Score out of the total.' },
     { h:'Finished?', w:104, align:'center', list:['complete', 'progress'],
-      note:'complete — every question right (Mastery) or every question attempted (Test).\nprogress — handed in part way, to show the work so far.' },
+      note:'complete — every question right.\nprogress — handed in part way, to show the work so far.' },
     { h:'Checks', w:86, align:'center', fmt:'0', group:true, note:'How many times they pressed Check answer, in all. This is the evidence of grinding.' },
     { h:'Right first time', w:130, align:'center', fmt:'0', note:'How many questions they got right at the first attempt. Separates knowing it from working it out.' },
     { h:'Working since', w:120, align:'center', note:'How long before handing in they first checked anything.' },
-    { h:'Code', w:120, align:'center', group:true, note:'The completion code the student saw. They can paste it into Classroom.' },
-    { h:'Checked', w:90, align:'center', note:'Whether that code recomputes here. Anything that does not is in the Rejected tab instead.' },
+    { h:'Code', w:120, align:'center', group:true,
+      note:'The completion code the student saw. Anything whose code does not recompute goes to the Rejected tab instead of here.' },
     { h:'Flags', w:200, wrap:true, note:'Anything worth a second look.' },
     { h:'Per station', w:420, wrap:true, note:'Their score at each station, and how many checks it took there.' }
   ], { freezeCols: 2, tab:'#3D7A54' });
@@ -858,17 +793,17 @@ function _styleLab(sh) {
       .setGradientMinpointWithValue(LOW, SpreadsheetApp.InterpolationType.NUMBER, '0')
       .setGradientMidpointWithValue(MID, SpreadsheetApp.InterpolationType.NUMBER, '0.6')
       .setGradientMaxpointWithValue(HIGH, SpreadsheetApp.InterpolationType.NUMBER, '1')
-      .setRanges([sh.getRange(2, 7, rows, 1)]).build(),
+      .setRanges([sh.getRange(2, 6, rows, 1)]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('progress')
       .setBackground(MID).setFontColor('#7A5B00')
-      .setRanges([sh.getRange(2, 8, rows, 1)]).build(),
+      .setRanges([sh.getRange(2, 7, rows, 1)]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('complete')
       .setBackground(HIGH).setFontColor('#265C33')
-      .setRanges([sh.getRange(2, 8, rows, 1)]).build(),
-    /* the one thing that should shout: a hand-in that says nothing was got right */
+      .setRanges([sh.getRange(2, 7, rows, 1)]).build(),
+    /* the one thing that should shout */
     SpreadsheetApp.newConditionalFormatRule().whenNumberLessThan(0.4)
       .setFontColor('#A3342A').setBold(true)
-      .setRanges([sh.getRange(2, 7, rows, 1)]).build()
+      .setRanges([sh.getRange(2, 6, rows, 1)]).build()
   ]);
 }
 
@@ -878,7 +813,7 @@ function _tidyLastRow(sh) {
   var r = sh.getLastRow();
   if (r > 1) sh.setRowHeight(r, 21);
   if (!sh.getFilter() && r > 1) {
-    try { sh.getRange(1, 1, r, 15).createFilter(); } catch (e) {}
+    try { sh.getRange(1, 1, r, 13).createFilter(); } catch (e) {}
   }
 }
 
@@ -908,13 +843,12 @@ function _sheet(name) {
   if (sh) return sh;
   sh = ss.insertSheet(name);
   if (name === T_LABS) {
-    sh.getRange(1, 1, 1, 6).setValues([['Lab id', 'Lab', 'Topic',
-                                        'Message when Mastery is closed', 'Questions', 'Hand-ins']]);
+    sh.getRange(1, 1, 1, 5).setValues([['Lab id', 'Lab', 'Topic', 'Questions', 'Hand-ins']]);
     var rows = LABS.map(function (l, i) {
-      return [l.id, l.name, l.topic, 'Mastery is closed — this is your test.',
-              l.questions || '', '=IFERROR(COUNTA(INDIRECT("\'"&B' + (i + 2) + '&"\'!B2:B")),0)'];
+      return [l.id, l.name, l.topic, l.questions || '',
+              '=IFERROR(COUNTA(INDIRECT("\'"&B' + (i + 2) + '&"\'!B2:B")),0)'];
     });
-    sh.getRange(2, 1, rows.length, 6).setValues(rows);
+    sh.getRange(2, 1, rows.length, 5).setValues(rows);
   } else if (name === T_STUDENTS) {
     var head = ['Name', 'Class'].concat(LABS.map(function (l) { return l.name; }))
                .concat(['Labs started', 'Average', 'School email', 'Classroom course',
@@ -931,8 +865,8 @@ function _labSheet(lab) {
   var ss = _ss(), sh = ss.getSheetByName(lab.name);
   if (!sh) {
     sh = ss.insertSheet(lab.name);
-    sh.getRange(1, 1, 1, 15).setValues([['When', 'Name', 'Class', 'Mode', 'Score', 'Out of', '%',
-      'Finished?', 'Checks', 'Right first time', 'Working since', 'Code', 'Code check', 'Flags', 'Per station']]);
+    sh.getRange(1, 1, 1, 13).setValues([['When', 'Name', 'Class', 'Score', 'Out of', '%',
+      'Finished?', 'Checks', 'Right first time', 'Working since', 'Code', 'Flags', 'Per station']]);
     _styleLab(sh);
   }
   return sh;
@@ -971,5 +905,3 @@ function _code(labId, name, form, score) {
 }
 function _tidy(s) { return String(s || '').toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
 function _text(m) { return ContentService.createTextOutput(m).setMimeType(ContentService.MimeType.TEXT); }
-function _json(m) { return ContentService.createTextOutput(m).setMimeType(ContentService.MimeType.JSON); }
-function _js(m)   { return ContentService.createTextOutput(m).setMimeType(ContentService.MimeType.JAVASCRIPT); }
