@@ -221,9 +221,18 @@ queued.forEach(t => {
 document.getElementById('count').textContent = queued.length + ' more on the way';
 said.innerHTML = IDLE;
 
+/* Panning is on, so a student can zoom in and wander. Tapping a lab in the list puts the
+   view back where it started — an explicit action, unlike the tour, which must not yank the
+   camera about while somebody is looking at something. */
+function homeView() {
+  controls.target.set(0, 0, 0);
+  camera.position.set(0, 0.12, 3.15);
+}
+
 function wire(el, t) {
   ['mouseenter','focus'].forEach(e => el.addEventListener(e, () => focusSystem(t)));
   ['mouseleave','blur'].forEach(e => el.addEventListener(e, clearSystem));
+  el.addEventListener('click', homeView);      /* tapping a lab is also the way back */
 }
 
 /* ---------------- toggles ---------------- */
@@ -283,13 +292,13 @@ renderer.domElement.addEventListener('click', ev => {
 
 /* ---------------- the idle tour ---------------- */
 const TOURABLE = T.filter(t => t.sys && t.sys !== 'drugs');
-let tour = null, resumeT = null, ti = 0, paused = false;
+let tour = null, resumeT = null, ti = 0;
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Long enough to read the lab name and the topic under it without hurrying. */
 const TOUR_MS = 5800;
 
 function startTour() {
-  if (still || tour || !organs.length || paused) return;
+  if (still || tour || !organs.length) return;
   const step = () => { focusSystem(TOURABLE[ti % TOURABLE.length]); ti++; };
   step(); tour = setInterval(step, TOUR_MS);
 }
@@ -303,44 +312,6 @@ function stopTour(wait) {
 }, { passive:true }));
 document.querySelectorAll('.hero,.q__btn').forEach(el =>
   el.addEventListener('mouseenter', () => stopTour(20000)));
-
-/* Back to the whole body. With panning switched on you can wander off, and on a phone
-   there is no obvious way back — this is it. */
-/* "Scroll to zoom" is a mouse instruction. On a touch screen say what actually works. */
-const hintEl = document.querySelector('.hint');
-if (hintEl && matchMedia('(hover: none)').matches) {
-  hintEl.textContent = 'Drag to turn · pinch to zoom · two fingers to move';
-}
-
-const homeBtn = document.getElementById('homeBtn');
-if (homeBtn) homeBtn.addEventListener('click', e => {
-  e.stopPropagation();
-  controls.target.set(0, 0, 0);
-  camera.position.set(0, 0.12, 3.15);
-  controls.update();
-});
-
-/* Pause and play, because the only other way to stop it is to keep touching the screen. */
-const tourBtn = document.getElementById('tourBtn');
-if (tourBtn) {
-  if (still) tourBtn.hidden = true;
-  const paintTourBtn = () => {
-    tourBtn.textContent = paused ? '\u25B6' : '\u23F8';
-    const what = paused ? 'Play the tour' : 'Pause the tour';
-    tourBtn.title = what;
-    tourBtn.setAttribute('aria-label', what);
-    tourBtn.setAttribute('aria-pressed', String(paused));
-  };
-  tourBtn.addEventListener('pointerdown', e => e.stopPropagation());
-  tourBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    paused = !paused;
-    if (paused) { clearInterval(tour); tour = null; clearTimeout(resumeT); }
-    else startTour();
-    paintTourBtn();
-  });
-  paintTourBtn();
-}
 
 /* ---------------- toast ---------------- */
 let timer;

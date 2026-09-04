@@ -216,7 +216,7 @@
      Left alone, the plate walks the systems by itself, so anyone
      glancing at the screen sees what the body does. Any touch stops
      it; it picks up again after a long pause. */
-  var tour = null, resume = null, i = 0, paused = false;
+  var tour = null, resume = null, i = 0;
   var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var TOURABLE = T.filter(function (t) { return t.sys && t.anchor; });
   /* Long enough to read the lab name AND the topic under it without hurrying — these are
@@ -225,7 +225,7 @@
   var TOUR_MS = 5800;
 
   function startTour() {
-    if (still || tour || !svg || paused) return;
+    if (still || tour || !svg) return;
     step(); tour = setInterval(step, TOUR_MS);
   }
   function step() { focus(TOURABLE[i % TOURABLE.length]); i++; }
@@ -247,29 +247,6 @@
     }, { passive: true });
   });
   setTimeout(startTour, 4000);
-
-  /* Pause and play. Without it the only way to stop the tour is to keep touching the
-     screen, which is not obvious and does not last. */
-  var tourBtn = document.getElementById('tourBtn');
-  if (tourBtn) {
-    if (still) tourBtn.hidden = true;
-    var paintTourBtn = function () {
-      tourBtn.textContent = paused ? '\u25B6' : '\u23F8';
-      var what = paused ? 'Play the tour' : 'Pause the tour';
-      tourBtn.title = what;
-      tourBtn.setAttribute('aria-label', what);
-      tourBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
-    };
-    tourBtn.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
-    tourBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      paused = !paused;
-      if (paused) { clearInterval(tour); tour = null; clearTimeout(resume); }
-      else startTour();
-      paintTourBtn();
-    });
-    paintTourBtn();
-  }
 
   /* ---------- 5. toast ---------- */
   var timer;
