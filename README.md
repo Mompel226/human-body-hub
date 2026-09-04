@@ -9,9 +9,8 @@ sit; open the lab and work through the topic with questions that mark themselves
 
 <br>
 
-[![Open the site](https://img.shields.io/badge/▶_Open_the_site-3D7A54?style=for-the-badge)](https://mompel226.github.io/IGCSE-revision-app/)
-[![Light version](https://img.shields.io/badge/Light_version-6FA287?style=for-the-badge)](https://mompel226.github.io/IGCSE-revision-app/plate.html)
-[![Digestion Lab](https://img.shields.io/badge/Digestion_Lab-C9A227?style=for-the-badge)](https://mompel226.github.io/digestion-lab/)
+[![Open the site](https://img.shields.io/badge/▶_Open_the_site-0969DA?style=for-the-badge&logoColor=white)](https://mompel226.github.io/IGCSE-revision-app/)
+[![Light version](https://img.shields.io/badge/Light_version-218BFF?style=for-the-badge&logoColor=white)](https://mompel226.github.io/IGCSE-revision-app/plate.html)
 
 ![IGCSE Biology 0610](https://img.shields.io/badge/IGCSE_Biology-0610-3D7A54)
 ![Free to use](https://img.shields.io/badge/students-no_sign--up_needed-6FA287)
@@ -92,13 +91,29 @@ One Google Sheet with a tab per lab. Each tab is your class list: every student 
 the moment you import them from Google Classroom, and handing in fills theirs in — score,
 percentage, how many checks it took, how many they got right first time, how long they worked.
 
-```mermaid
-graph LR
-  A["🧑‍🎓 Your student<br/>works through a lab"] --> B["presses<br/>Hand in"]
-  B --> C{"Signs in with<br/>Google"}
-  C -->|"on your class list"| D["✅ their row fills in<br/>on your Sheet"]
-  C -->|"anyone else in the world"| E["🌍 nothing saved,<br/>anywhere"]
-```
+<table>
+<tr><td colspan="2" align="center">
+
+**🧑‍🎓 Your student works through a lab &nbsp;→&nbsp; presses Hand in &nbsp;→&nbsp; signs in with Google**
+
+</td></tr>
+<tr>
+<td width="50%" valign="top">
+
+#### ✅ &nbsp;On your class list
+
+Their row fills in on **your** Sheet — score, percentage, and the work behind it.
+
+</td>
+<td width="50%" valign="top">
+
+#### 🌍 &nbsp;Anyone else in the world
+
+**Nothing is saved, anywhere.** No row, no name, no email. They still get their code.
+
+</td>
+</tr>
+</table>
 
 > [!IMPORTANT]
 > **The labs stay open to everyone.** A hand-in is recorded **only** when the Google account
@@ -140,6 +155,23 @@ You do not need to know GitHub. It is three clicks and one edit.
 *(To change a file in your copy: open it on GitHub, press the **✏️ pencil**, edit, then
 **Commit changes**. That is all the GitHub you need.)*
 
+#### Do you want the hub as well?
+
+The hub — the body you point at to choose a lab — is only a signpost. **No marks pass through
+it**, so you can skip this entirely and just give your students your lab link. But if you want
+the whole thing under your own name, and you want it pointing at *your* labs rather than mine:
+
+| # | Do this |
+|:--:|---|
+| **a** | Fork **[Mompel226/IGCSE-revision-app](https://github.com/Mompel226/IGCSE-revision-app)** the same way. |
+| **b** | In your fork: **Settings ▸ Pages** ▸ branch **main** ▸ **Save**. It goes live at `https://YOUR-USERNAME.github.io/IGCSE-revision-app/`. |
+| **c** | Open **`js/topics.js`**, press the ✏️ pencil, and change every `url:` to your own fork's address — `https://YOUR-USERNAME.github.io/digestion-lab/` and so on for each lab you host. **Commit changes.** |
+| **d** | Share **your** hub link with your classes. |
+
+> ⚠️ &nbsp;**If you skip step c**, your hub will send your students to *my* labs, which post to
+> *my* spreadsheet — and since they are not on my class list, nothing is saved for anybody. The
+> `url` in `js/topics.js` is the only thing that decides where a student ends up.
+
 ---
 
 ### Step 2 · Build the spreadsheet 📗
@@ -168,18 +200,30 @@ secret — it sits in plain sight in the page. One long string ending
 
 | # | Do this |
 |:--:|---|
-| **9** | Go to **[console.cloud.google.com](https://console.cloud.google.com)** ▸ pick a project or make one (any name). |
-| **10** | **Google Auth Platform ▸ Branding** *(older console: APIs & Services ▸ OAuth consent screen)*. Fill in an app name and your email, and save. User type **External**. |
-| **11** | **Audience ▸ Publish app.** |
-| **12** | **Credentials ▸ Create credentials ▸ OAuth client ID ▸ Web application.** Under **Authorised JavaScript origins** put **`https://YOUR-USERNAME.github.io`** — your address from step 3, with **no path and no trailing slash**. Leave *redirect URIs* empty. Press **Create** and copy the id. |
+| **9** | Go to **[console.cloud.google.com](https://console.cloud.google.com)** and pick a project, or make one — any name, it is just a container. |
+| **10** | In the search bar type **Google Auth Platform** and open it. On a new project it shows **Get started** and walks you through four short screens: **App information** (an app name, and your own email as the support email) ▸ **Audience** — choose **External** ▸ **Contact information** (your email again) ▸ agree and **Create**. Nothing here is public unless you publish it, and none of it needs a website or a privacy policy. |
+| **11** | Now in the left-hand menu: **Audience ▸ Publish app** ▸ confirm. It should read **In production**, not *Testing*. |
+| **12** | Left-hand menu: **Clients ▸ Create client** *(the older console calls this **APIs & Services ▸ Credentials ▸ Create credentials ▸ OAuth client ID** — both land in the same place)*. **Application type: Web application**. Give it any name. |
+| **13** | Under **Authorised JavaScript origins** press **+ Add URI** and enter exactly **`https://YOUR-USERNAME.github.io`** — your address from step 3, **no path, no trailing slash, no `/digestion-lab`**. Leave **Authorised redirect URIs** completely empty. Press **Create** and copy the **Client ID** (it ends `.apps.googleusercontent.com`). |
 
-> ### ⚠️ &nbsp;Two traps in this step
-> **Step 10 must come before step 12.** Google will not issue an id until the consent screen
-> exists, and clicking straight to *Create credentials* just bounces you.
+> ### ⚠️ &nbsp;Three things that catch people out here
+> **Step 10 must come before step 12.** Google will not issue a client id until the consent
+> screen exists — go straight to *Create client* and it bounces you back.
 >
-> **Step 11 is not optional.** Left on *Testing*, your students are told *“access blocked:
-> this app has not completed verification”*. Publishing needs no review: signing in asks for a
-> name and an email only, which Google counts as non-sensitive.
+> **Step 11 is not optional.** Left on *Testing*, only accounts you list by hand can sign in
+> and everyone else is told *“access blocked: this app has not completed verification”*.
+> Publishing needs no review here: signing in asks for a name and an email address only, which
+> Google counts as **non-sensitive** — so there is no waiting and nothing to submit.
+>
+> **The origin has no path.** `https://YOUR-USERNAME.github.io` — not
+> `https://YOUR-USERNAME.github.io/digestion-lab/`, and no trailing slash. Google matches the
+> origin exactly, and the commonest failure is a sign-in button that appears and then does
+> nothing.
+>
+> *Google redesigns this console fairly often. If a screen does not look like the above, the
+> three things you are looking for are always the same: a **consent screen / Branding** page,
+> an **Audience** page with a **Publish** button, and a **Clients / Credentials** page that
+> makes a **Web application** client.*
 
 ---
 
@@ -187,9 +231,9 @@ secret — it sits in plain sight in the page. One long string ending
 
 | # | Do this |
 |:--:|---|
-| **13** | In the Apps Script editor, paste your Client ID into **`CLIENT_ID`** at the very top of `Code.gs`. |
-| **14** | **Deploy ▸ New deployment ▸ Web app.** *Execute as* **Me**, *Who has access* **Anyone**. Press **Deploy** and copy the **`/exec` URL**. |
-| **15** | In **your fork** of the lab, open **`js/config.js`**, press the ✏️ pencil, and fill in two lines — `submitUrl:` your `/exec` URL, and `googleClientId:` the same Client ID as step 13. **Commit changes.** |
+| **14** | In the Apps Script editor, paste your Client ID into **`CLIENT_ID`** at the very top of `Code.gs`. |
+| **15** | **Deploy ▸ New deployment ▸ Web app.** *Execute as* **Me**, *Who has access* **Anyone**. Press **Deploy** and copy the **`/exec` URL**. |
+| **16** | In **your fork** of the lab, open **`js/config.js`**, press the ✏️ pencil, and fill in two lines — `submitUrl:` your `/exec` URL, and `googleClientId:` the same Client ID as step 14. **Commit changes.** |
 
 > ### 🔁 &nbsp;Remember this one for ever
 > **Every time you edit the script from now on:** Deploy ▸ Manage deployments ▸ **✏️ pencil**
@@ -202,8 +246,8 @@ secret — it sits in plain sight in the page. One long string ending
 
 | # | Do this |
 |:--:|---|
-| **16** | In your Sheet: **🧪 Biology Labs ▸ Import students from Classroom…** Tick your courses, check the class codes it guesses, **Import**. Every lab tab fills with names. |
-| **17** | Open **your** lab link, answer one question, press **Hand in**, and sign in as yourself. |
+| **17** | In your Sheet: **🧪 Biology Labs ▸ Import students from Classroom…** Tick your courses, check the class codes it guesses, **Import**. Every lab tab fills with names. |
+| **18** | Open **your** lab link, answer one question, press **Hand in**, and sign in as yourself. |
 
 If you are on the Students tab, your row fills in. If you are not — you are the teacher, after
 all — nothing is saved, which is the system working. Add yourself to the **Students** tab by
@@ -231,14 +275,15 @@ much is in there.
 | no sign-in button on the lab | `googleClientId` is empty in your fork's `js/config.js` |
 | `access blocked: this app has not completed verification` | step 11 was missed — Audience ▸ **Publish app** |
 | sign-in works, but nothing reaches the Sheet | `CLIENT_ID` is empty, is a different string from `googleClientId`, or the deployment is stale |
-| a lab's tab has no names in it | nobody has been imported yet — step 16 |
+| a lab's tab has no names in it | nobody has been imported yet — step 17 |
+| everything is set up, but **no** student appears | you shared my link, or your hub's `js/topics.js` still points at my labs. Your students must open **your** address — `https://YOUR-USERNAME.github.io/digestion-lab/` |
 | a stranger signs in and nothing is recorded | working as intended 🌍 |
 
 </details>
 
 ---
 
-## 🗂️ Living with it
+## 🗂️ Once it is running — what you actually do
 
 <details>
 <summary><b>What each tab holds</b></summary>

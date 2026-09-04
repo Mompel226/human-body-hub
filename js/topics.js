@@ -19,7 +19,7 @@ window.TOPICS = [
   { id:'digestion',    no:7,  year:'Y10', side:'l', sys:'digestion',    anchor:'o-stomach',
     title:'Human nutrition',        lab:'Digestion Lab',
     blurb:'Diet, teeth, the alimentary canal and the enzymes that break food down.',
-    detail:'13 stations · 107 questions',
+    detail:'13 stations · 113 questions',
     status:'live', url:'https://mompel226.github.io/digestion-lab/' },
 
   { id:'circulation',  no:9,  year:'Y10', side:'l', sys:'circulation',  anchor:'o-heart',
