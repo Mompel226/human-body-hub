@@ -185,10 +185,10 @@ been rearranging things by hand.
    `Classroom`. *(Miss this and the import window says "Classroom is not defined".)*
 5. **Run ▸ `setup`.** Authorise when asked — your own script, your own Sheet. It builds and
    styles every tab.
-6. **Switch on sign-in.** Make an OAuth Client ID — console.cloud.google.com ▸ APIs &
-   Services ▸ Credentials ▸ Create credentials ▸ OAuth client ID ▸ Web application, with
-   `https://mompel226.github.io` as an authorised JavaScript origin — and paste it into
-   `CLIENT_ID` at the top of `Code.gs` **and** `googleClientId` in every lab's `js/config.js`.
+6. **Switch on sign-in.** Make an OAuth Client ID and paste it into two places —
+   `CLIENT_ID` at the top of `Code.gs` **and** `googleClientId` in every lab's
+   `js/config.js`. **[Full walk-through below](#sign-in-what-the-client-id-is-and-why-it-goes-in-two-places)** — it is the one
+   step with a trap in it, and until it is done nothing at all reaches your spreadsheet.
 7. **Deploy ▸ New deployment ▸ Web app**, *Execute as* **Me**, *Who has access* **Anyone**.
    Deploy, copy the `/exec` URL. *(“Anyone” sounds alarming — see below for what it does and
    does not open up. It is the only setting that works, and it does not share your Sheet.)*
@@ -197,9 +197,70 @@ been rearranging things by hand.
 > **After any edit to the script:** Deploy ▸ Manage deployments ▸ pencil ▸ *Version: New
 > version* ▸ Deploy. Editing alone changes nothing.
 
+### Sign-in: what the Client ID is, and why it goes in two places
+
+**A Client ID is a name-tag for your app, issued by Google.** It is not a password and not a
+secret — it sits in plain sight in the page source, and that is fine. It is one long string
+ending `.apps.googleusercontent.com`.
+
+When a student presses *Sign in with Google* on a lab page, three things happen:
+
+1. **The page** says to Google: *I am this app* — that is `googleClientId` in `js/config.js`.
+2. **Google** shows the student the sign-in prompt and hands the page back a signed token
+   saying who they are, which the page sends on with their hand-in.
+3. **The script** checks that token was made **for your app** and not somebody else's — that
+   is `CLIENT_ID` in `Code.gs`. Without this check anyone could take a Google token from any
+   other website and post it to your `/exec` URL.
+
+**It is the same string in both places.** Two different strings, or one left empty, and every
+hand-in comes back *not recorded: sign-in is not set up* — the labs keep working and everyone
+still gets their completion code, but nothing reaches the spreadsheet.
+
+#### Making one — about five minutes, free
+
+1. **console.cloud.google.com** ▸ pick a project or make one (any name).
+2. **Google Auth Platform ▸ Branding** (older console: *APIs & Services ▸ OAuth consent
+   screen*). Google makes you do this **before** it will give you a Client ID — this is the
+   step that stops people. Fill in an app name and your own email, and save.
+   * **User type *External*** if the project is on a personal Google account.
+   * **User type *Internal*** is offered only if the project sits on the school's Workspace
+     account. It is simpler — every school account can sign in and nobody else can — but
+     someone outside the school pressing *Sign in* then gets an error rather than signing in
+     and being quietly ignored. Either works; **External** is the one that matches how these
+     labs are meant to be used.
+3. **If you chose External: publish it.** *Audience* ▸ **Publish app**. Left in *Testing*,
+   only accounts you list by hand can sign in — your students would be told the app is
+   blocked. Publishing needs no review here: signing in asks for name and email only, which
+   Google counts as non-sensitive.
+4. **Credentials ▸ Create credentials ▸ OAuth client ID ▸ Web application.**
+   Under **Authorised JavaScript origins** add exactly:
+
+   ```
+   https://mompel226.github.io
+   ```
+
+   No path, no trailing slash — `https://mompel226.github.io/digestion-lab/` will not work.
+   Leave *Authorised redirect URIs* empty; sign-in happens in the page, not by redirect.
+5. **Create**, then copy the Client ID and paste it into **both** places:
+   * `CLIENT_ID` at the top of `Code.gs` — then Deploy ▸ Manage deployments ▸ ✏️ ▸
+     *Version: New version* ▸ Deploy. **Editing alone changes nothing.**
+   * `googleClientId` in each lab's `js/config.js` — commit and push.
+
+To test it: open a lab, press *Hand in*. Signed out you are asked to sign in; signed in as
+one of your students it lands on their row. Signed in as anyone else, nothing is written down
+anywhere.
+
+| What you see | What it means |
+|---|---|
+| the sign-in button never appears | `googleClientId` is empty in that lab's `js/config.js`, or the page was served from a cached copy — bump the `?v=` stamps |
+| "access blocked: this app has not completed verification" | the consent screen is still on *Testing*. Audience ▸ Publish app |
+| sign-in works but nothing reaches the Sheet | `CLIENT_ID` in `Code.gs` is empty, is a different string, or the **deployment** is an older snapshot than the editor — redeploy with the pencil |
+| a stranger signs in and nothing is recorded | working as intended |
+
 **If something is not working:** 🧪 Biology Labs ▸ **Check the set-up**. It tells you in one
 box whether `SHEET_ID` is set, whether the Sheet opens, whether Google Classroom is switched
-on and authorised, how many students are imported and how many lab tabs exist.
+on and authorised, **whether sign-in is set up** — the one that decides whether anything is
+recorded at all — how many students are imported and how many lab tabs exist.
 
 | What you see | What it means |
 |---|---|
@@ -391,12 +452,22 @@ var LAB_EMAIL = 15;        /* the column that ties a row to a person */
    So a hand-in is kept only when the Google account that signed in is on your Students
    tab. Everyone else gets their completion code on screen and nothing is written down.
 
-   To get a CLIENT_ID (about five minutes, free):
-     console.cloud.google.com ▸ pick or make a project ▸ APIs & Services ▸ Credentials
-     ▸ Create credentials ▸ OAuth client ID ▸ Web application
-     Authorised JavaScript origins:  https://mompel226.github.io
+   A Client ID is a name-tag for your app, issued by Google. It is not a secret — it sits
+   in plain sight in the page source. The lab page uses it to ask Google for a sign-in; this
+   script uses it to check the token it gets back was made for YOUR app and not somebody
+   else's. Same string in both places, or nothing is recorded.
+
+   To get one (about five minutes, free):
+     console.cloud.google.com ▸ pick or make a project
+     ▸ Google Auth Platform ▸ Branding — fill this in FIRST, Google will not issue an id
+       without it. User type External, then Audience ▸ Publish app. Left on "Testing",
+       your students are told the app is blocked.
+     ▸ Credentials ▸ Create credentials ▸ OAuth client ID ▸ Web application
+       Authorised JavaScript origins:  https://mompel226.github.io
+       (no path, no trailing slash. Leave redirect URIs empty.)
      Create, then copy the Client ID (it ends .apps.googleusercontent.com) into BOTH
      places: here, and googleClientId in every lab's js/config.js.
+     The full version of this is in the README, under "Sign-in: what the Client ID is".
 
    Leave it empty and nothing is recorded at all — the labs still work, and everyone gets
    a completion code to hand in by other means.
@@ -782,6 +853,21 @@ function checkSetup() {
     try { var n = (Classroom.Courses.list({ courseStates: ['ACTIVE'], pageSize: 5 }).courses || []).length;
           lines.push('✅  it can see your courses (' + n + '+ active)'); }
     catch (e) { lines.push('❌  Classroom is on but not authorised — Run ▸ setup once and accept. (' + e + ')'); }
+  }
+
+  /* The one that decides whether anything is recorded at all, so it says so plainly. */
+  if (!CLIENT_ID) {
+    lines.push('❌  sign-in is NOT set up — CLIENT_ID at the top of this script is empty, so ' +
+               'NOTHING is being recorded, however green everything above is. Every hand-in ' +
+               'comes back “not recorded: sign-in is not set up”. See “Sign-in: what the ' +
+               'Client ID is” in the README.');
+  } else if (!/\.apps\.googleusercontent\.com$/.test(CLIENT_ID)) {
+    lines.push('❌  CLIENT_ID does not look like a Client ID — it should end ' +
+               '.apps.googleusercontent.com. This looks like something else was pasted in.');
+  } else {
+    lines.push('✅  sign-in is set up (…' + CLIENT_ID.slice(-32) + ')');
+    lines.push('•  the SAME id must also be googleClientId in every lab\'s js/config.js, or ' +
+               'that lab can never record anything.');
   }
 
   if (openOk) {

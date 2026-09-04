@@ -78,12 +78,22 @@ var LAB_EMAIL = 15;        /* the column that ties a row to a person */
    So a hand-in is kept only when the Google account that signed in is on your Students
    tab. Everyone else gets their completion code on screen and nothing is written down.
 
-   To get a CLIENT_ID (about five minutes, free):
-     console.cloud.google.com ▸ pick or make a project ▸ APIs & Services ▸ Credentials
-     ▸ Create credentials ▸ OAuth client ID ▸ Web application
-     Authorised JavaScript origins:  https://mompel226.github.io
+   A Client ID is a name-tag for your app, issued by Google. It is not a secret — it sits
+   in plain sight in the page source. The lab page uses it to ask Google for a sign-in; this
+   script uses it to check the token it gets back was made for YOUR app and not somebody
+   else's. Same string in both places, or nothing is recorded.
+
+   To get one (about five minutes, free):
+     console.cloud.google.com ▸ pick or make a project
+     ▸ Google Auth Platform ▸ Branding — fill this in FIRST, Google will not issue an id
+       without it. User type External, then Audience ▸ Publish app. Left on "Testing",
+       your students are told the app is blocked.
+     ▸ Credentials ▸ Create credentials ▸ OAuth client ID ▸ Web application
+       Authorised JavaScript origins:  https://mompel226.github.io
+       (no path, no trailing slash. Leave redirect URIs empty.)
      Create, then copy the Client ID (it ends .apps.googleusercontent.com) into BOTH
      places: here, and googleClientId in every lab's js/config.js.
+     The full version of this is in the README, under "Sign-in: what the Client ID is".
 
    Leave it empty and nothing is recorded at all — the labs still work, and everyone gets
    a completion code to hand in by other means.
@@ -469,6 +479,21 @@ function checkSetup() {
     try { var n = (Classroom.Courses.list({ courseStates: ['ACTIVE'], pageSize: 5 }).courses || []).length;
           lines.push('✅  it can see your courses (' + n + '+ active)'); }
     catch (e) { lines.push('❌  Classroom is on but not authorised — Run ▸ setup once and accept. (' + e + ')'); }
+  }
+
+  /* The one that decides whether anything is recorded at all, so it says so plainly. */
+  if (!CLIENT_ID) {
+    lines.push('❌  sign-in is NOT set up — CLIENT_ID at the top of this script is empty, so ' +
+               'NOTHING is being recorded, however green everything above is. Every hand-in ' +
+               'comes back “not recorded: sign-in is not set up”. See “Sign-in: what the ' +
+               'Client ID is” in the README.');
+  } else if (!/\.apps\.googleusercontent\.com$/.test(CLIENT_ID)) {
+    lines.push('❌  CLIENT_ID does not look like a Client ID — it should end ' +
+               '.apps.googleusercontent.com. This looks like something else was pasted in.');
+  } else {
+    lines.push('✅  sign-in is set up (…' + CLIENT_ID.slice(-32) + ')');
+    lines.push('•  the SAME id must also be googleClientId in every lab\'s js/config.js, or ' +
+               'that lab can never record anything.');
   }
 
   if (openOk) {
