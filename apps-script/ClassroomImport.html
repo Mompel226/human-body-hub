@@ -1,0 +1,285 @@
+<!--
+  Biology Labs — import students from Google Classroom
+  Copyright (c) 2025-2026 Daniel Mompel Riera. All rights reserved.
+
+  The flow is the one Daniel already uses in the Assessment Reflection System, and
+  for the same reasons: ONE long-running server call does the work, and the dialog
+  polls a cached progress record alongside it. So each class ticks green as it
+  finishes, and closing this window does not interrupt the import — Apps Script
+  never learns that the client went away.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; padding: 16px; font-size: 13px; }
+h2 { font-size: 15px; color: #e6edf3; margin-bottom: 4px; }
+.subtitle { color: #8b949e; font-size: 12px; margin-bottom: 14px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: .04em; padding: 6px 8px; border-bottom: 1px solid #30363d; white-space: nowrap; }
+td { padding: 5px 8px; border-bottom: 1px solid #21262d; vertical-align: middle; }
+tr.row:hover { background: #161b22; }
+tr.row.selected { background: #0d1926; }
+.cb { width: 16px; height: 16px; accent-color: #58a6ff; cursor: pointer; }
+input[type="text"] { background: #161b22; border: 1px solid #30363d; border-radius: 4px; color: #e6edf3; padding: 4px 8px; font-size: 12px; width: 72px; }
+input[type="text"]:focus { border-color: #58a6ff; outline: none; }
+input[type="text"].err { border-color: #f85149; }
+.badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-left: 6px; }
+.badge-have { background: #23863633; color: #3fb950; }
+.badge-dup  { background: #f8514933; color: #f85149; }
+.status { font-size: 12px; white-space: nowrap; min-width: 130px; }
+.status .spin { display: inline-block; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn { padding: 8px 20px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s; }
+.btn-primary { background: #238636; color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #2ea043; }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+.btn-close { background: #21262d; color: #c9d1d9; }
+.btn-close:hover { background: #30363d; }
+.bar { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.bar .count { color: #8b949e; font-size: 12px; }
+.loading { text-align: center; padding: 40px; color: #8b949e; }
+.summary { margin-top: 12px; padding: 10px 14px; background: #161b22; border-radius: 6px; font-size: 12px; color: #8b949e; line-height: 1.6; }
+.course-name { color: #e6edf3; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+.section { color: #8b949e; font-size: 11px; }
+</style>
+</head>
+<body>
+<h2>Import students from Google Classroom</h2>
+<div class="subtitle" id="subtitle">Loading courses…</div>
+
+<div id="content"><div class="loading">Fetching your Google Classroom courses…</div></div>
+
+<div class="bar" id="bar" style="display:none">
+  <span class="count" id="sel-count">0 selected</span>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-close" onclick="google.script.host.close()">Cancel</button>
+    <button class="btn btn-primary" id="btn-import" disabled onclick="startImport()">Import selected</button>
+  </div>
+</div>
+
+<script>
+var DATA = null;
+var importing = false;
+
+google.script.run
+  .withSuccessHandler(function (d) { DATA = d; render(); })
+  .withFailureHandler(function (e) {
+    document.getElementById('content').innerHTML =
+      '<div class="loading" style="color:#f85149">Could not load your courses: ' + esc(e.message) + '</div>';
+  })
+  .getBatchImportData();
+
+function esc(s) { var d = document.createElement('span'); d.textContent = s; return d.innerHTML; }
+
+function render() {
+  if (!DATA || !DATA.courses.length) {
+    document.getElementById('content').innerHTML = '<div class="loading">No active courses found.</div>';
+    return;
+  }
+  document.getElementById('subtitle').textContent =
+    DATA.courses.length + ' active course(s). Tick the ones to import, check the class code, then Import. ' +
+    'Students already here are skipped, so you can re-run this whenever someone joins.';
+  document.getElementById('bar').style.display = '';
+
+  var html = '<table><thead><tr>' +
+    '<th style="width:28px"><input type="checkbox" class="cb" id="cb-all" onchange="toggleAll(this.checked)"></th>' +
+    '<th style="width:28px">#</th>' +
+    '<th>Course</th>' +
+    '<th style="width:96px">Class code</th>' +
+    '<th>Status</th>' +
+    '</tr></thead><tbody>';
+
+  DATA.courses.forEach(function (c, i) {
+    html += '<tr class="row" id="row-' + i + '">' +
+      '<td><input type="checkbox" class="cb" id="cb-' + i + '" onchange="updateUI()"></td>' +
+      '<td style="color:#8b949e">' + (i + 1) + '</td>' +
+      '<td><span class="course-name">' + esc(c.name) + '</span>' +
+        (c.section ? ' <span class="section">' + esc(c.section) + '</span>' : '') +
+        '<span id="badge-' + i + '"></span></td>' +
+      '<td><input type="text" id="cc-' + i + '" value="' + esc(c.autoClassCode) + '" ' +
+        'oninput="updateUI()" placeholder="e.g. 9A"' + (c.autoClassCode ? '' : ' class="err"') + '></td>' +
+      '<td class="status" id="st-' + i + '">—</td>' +
+    '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('content').innerHTML = html;
+  updateUI();
+}
+
+function toggleAll(checked) {
+  DATA.courses.forEach(function (_, i) { document.getElementById('cb-' + i).checked = checked; });
+  updateUI();
+}
+
+function getSelections() {
+  var sels = [];
+  DATA.courses.forEach(function (c, i) {
+    if (!document.getElementById('cb-' + i).checked) return;
+    sels.push({
+      idx: i,
+      courseId: c.id,
+      classCode: document.getElementById('cc-' + i).value.trim().toUpperCase(),
+      courseName: c.display
+    });
+  });
+  return sels;
+}
+
+function updateUI() {
+  if (importing) return;
+  var sels = getSelections();
+  document.getElementById('sel-count').textContent = sels.length + ' selected';
+
+  DATA.courses.forEach(function (_, i) {
+    document.getElementById('badge-' + i).innerHTML = '';
+    var cc = document.getElementById('cc-' + i);
+    cc.classList.toggle('err', document.getElementById('cb-' + i).checked && !cc.value.trim());
+  });
+
+  var byCode = {}, hasEmpty = false;
+  sels.forEach(function (s) {
+    if (!s.classCode) { hasEmpty = true; return; }
+    var have = DATA.have[s.classCode];
+    if (have) document.getElementById('badge-' + s.idx).innerHTML =
+      '<span class="badge badge-have" title="Already in the Students tab — they will be skipped">' + have + ' already</span>';
+    (byCode[s.classCode] = byCode[s.classCode] || []).push(s.idx);
+  });
+  Object.keys(byCode).forEach(function (code) {
+    if (byCode[code].length > 1) byCode[code].forEach(function (idx) {
+      document.getElementById('badge-' + idx).innerHTML =
+        '<span class="badge badge-dup" title="Two courses share this class code — their students will be merged into one class">merge</span>';
+    });
+  });
+
+  document.getElementById('btn-import').disabled = sels.length === 0 || hasEmpty;
+}
+
+/* ── the import: one long call, progress polled alongside it ── */
+var POLL_INTERVAL_MS = 1500;
+var pollHandle = null;
+var pollFinished = false;
+
+function startImport() {
+  var sels = getSelections();
+  if (!sels.length) return;
+  importing = true;
+  pollFinished = false;
+  var btn = document.getElementById('btn-import');
+  btn.disabled = true;
+  btn.textContent = 'Importing ' + sels.length + ' class(es)…';
+  Array.prototype.forEach.call(document.querySelectorAll('.cb, input[type="text"]'), function (el) { el.disabled = true; });
+
+  sels.forEach(function (s, i) {
+    var st = document.getElementById('st-' + s.idx);
+    if (st) st.innerHTML = '<span class="spin">⏳</span> Queued (' + (i + 1) + '/' + sels.length + ')';
+    var row = document.getElementById('row-' + s.idx);
+    if (row) row.classList.add('selected');
+  });
+
+  document.getElementById('bar').insertAdjacentHTML('afterbegin',
+    '<div id="close-hint" style="font-size:11px;color:#8b949e;margin-bottom:6px">' +
+    'You can close this window — the import keeps running. Re-open the sheet to see the result.</div>');
+
+  var jobId = 'batch_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+
+  google.script.run
+    .withSuccessHandler(function (results) {
+      stopPolling();
+      applyResults(sels, results);
+      if (!pollFinished) showFinalSummary(sels);
+      pollFinished = true;
+    })
+    .withFailureHandler(function (err) {
+      /* The call can fail after the server actually finished — a network blip on
+         the way back. Ask the cache once more before calling anything failed. */
+      stopPolling();
+      google.script.run
+        .withSuccessHandler(function (p) {
+          if (p && Array.isArray(p.results)) applyResults(sels, p.results);
+          finalizeAfterError(sels, err);
+        })
+        .withFailureHandler(function () { finalizeAfterError(sels, err); })
+        .getBatchImportProgress(jobId);
+    })
+    .executeBatchImportAll(sels, jobId);
+
+  startPolling(jobId, sels);
+}
+
+function startPolling(jobId, sels) {
+  if (pollHandle) clearInterval(pollHandle);
+  pollHandle = setInterval(function () {
+    google.script.run
+      .withSuccessHandler(function (p) {
+        if (!p) return;
+        applyResults(sels, p.results);
+        if (p.done) {
+          stopPolling();
+          if (!pollFinished) showFinalSummary(sels);
+          pollFinished = true;
+        }
+      })
+      .withFailureHandler(function () { /* one poll failed; try the next */ })
+      .getBatchImportProgress(jobId);
+  }, POLL_INTERVAL_MS);
+}
+function stopPolling() { if (pollHandle) { clearInterval(pollHandle); pollHandle = null; } }
+
+function applyResults(sels, results) {
+  if (!Array.isArray(results)) return;
+  results.forEach(function (r, i) {
+    var s = sels[i];
+    if (!s || !r || r.status === 'pending') return;
+    var key = r.status + ':' + (r.added || 0) + ':' + (r.skipped || 0) + ':' + (r.error || '');
+    if (s._renderedKey === key) return;
+    s._renderedKey = key; s._result = r;
+    var st = document.getElementById('st-' + s.idx);
+    if (!st) return;
+    if (r.status === 'success') {
+      st.innerHTML = '<span style="color:#3fb950">✅ ' + r.added + ' added</span>' +
+        (r.skipped ? ' <span style="color:#8b949e">(' + r.skipped + ' already here)</span>' : '') +
+        (r.moved ? ' <span style="color:#d29922">(' + r.moved + ' moved class)</span>' : '');
+    } else if (r.status === 'empty') {
+      st.innerHTML = '<span style="color:#d29922">⚠ No students in that course</span>';
+    } else {
+      st.innerHTML = '<span style="color:#f85149">❌ ' + esc(r.error || 'Error').substring(0, 60) + '</span>';
+    }
+  });
+}
+
+function finalizeAfterError(sels, err) {
+  if (pollFinished) return;
+  sels.forEach(function (s) {
+    if (s._result) return;
+    s._result = { status: 'error', error: (err && err.message) || 'Server error' };
+    var st = document.getElementById('st-' + s.idx);
+    if (st) st.innerHTML = '<span style="color:#f85149">❌ ' + esc((err && err.message) || 'Error').substring(0, 60) + '</span>';
+  });
+  showFinalSummary(sels);
+  pollFinished = true;
+}
+
+function showFinalSummary(sels) {
+  importing = false;
+  var ok = 0, fail = 0, added = 0, skipped = 0;
+  sels.forEach(function (s) {
+    var r = s._result || {};
+    if (r.status === 'success') { ok++; added += (r.added || 0); skipped += (r.skipped || 0); }
+    else if (r.status !== 'empty') fail++;
+  });
+  var hint = document.getElementById('close-hint'); if (hint) hint.remove();
+  document.getElementById('bar').innerHTML =
+    '<div class="summary">' +
+      '<strong>' + ok + '</strong> class(es) imported. ' +
+      '<strong>' + added + '</strong> student(s) added' +
+      (skipped ? ', ' + skipped + ' already here' : '') + '.' +
+      (fail ? ' <span style="color:#f85149">' + fail + ' failed.</span>' : '') +
+    '</div>' +
+    '<button class="btn btn-close" style="margin-top:10px" onclick="google.script.host.close()">Close</button>';
+}
+</script>
+</body>
+</html>
