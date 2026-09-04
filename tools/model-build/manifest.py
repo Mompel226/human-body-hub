@@ -60,10 +60,32 @@ ORGANS = [
   ('lungR',       'Right lung',        'gas-exchange', ['FMA7333','FMA7383','FMA7337'], 12000),
   ('lungL',       'Left lung',         'gas-exchange', ['FMA7370','FMA7371'], 10000),
   ('diaphragm',   'Diaphragm',         'gas-exchange', ['FMA13295'], 9000),
+  ('intercostals','Intercostal muscles','gas-exchange', ['FMA9756','FMA9757'], 13000),
 
-  # ---- T12 respiration (the muscle where it happens) --------------------
-  ('quads',       'Thigh muscle',      'respiration', ['FMA38928','FMA38929'], 7000),
-  ('calves',      'Calf muscle',       'respiration', ['FMA45957','FMA45958','FMA45960','FMA45961'], 7000),
+  # ---- T12 respiration --------------------------------------------------
+  # Respiration happens in every cell; skeletal muscle is where a student can
+  # feel it. One thigh is not convincing, so this is muscle over the whole body.
+  ('muscle-arm',   'Arm and shoulder muscle', 'respiration',
+     ['FMA34683','FMA34682','FMA34681','FMA34680','FMA34685','FMA34684',   # deltoid
+      'FMA37687','FMA37686','FMA37685','FMA37684',                          # biceps brachii
+      'FMA37700','FMA37699','FMA37698','FMA37697','FMA37696','FMA37695'],   # triceps brachii
+     13000),
+  ('muscle-trunk', 'Chest and back muscle', 'respiration',
+     ['FMA34691','FMA34690','FMA79980','FMA79979','FMA45875','FMA45874',   # pectoralis major
+      'FMA33587','FMA33586','FMA33585','FMA33584','FMA33583','FMA33581',   # trapezius
+      'FMA13359','FMA13358',                                                # latissimus dorsi
+      'FMA13409','FMA13408'],                                               # sternocleidomastoid
+     15000),
+  ('muscle-abdomen','Abdominal muscle', 'respiration',
+     ['FMA13378','FMA13377','FMA13337','FMA13336'],   # rectus abdominis, external oblique
+     9000),
+  ('muscle-leg',   'Leg muscle', 'respiration',
+     ['FMA22329','FMA22328',                                                # gluteus maximus
+      'FMA38929','FMA38928','FMA38931','FMA38930','FMA38933','FMA38932',    # quadriceps
+      'FMA45889','FMA45888',                                                # biceps femoris
+      'FMA45958','FMA45957','FMA45961','FMA45960',                          # gastrocnemius
+      'FMA22559','FMA22558','FMA22545','FMA22544'],                         # soleus, tib. anterior
+     17000),
 
   # ---- T13 excretion ----------------------------------------------------
   ('kidneys',     'Kidneys',           'excretion',  ['FMA7204','FMA7205'], 9000),

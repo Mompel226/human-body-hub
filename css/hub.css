@@ -58,12 +58,12 @@ a{color:inherit;text-decoration:none}
 .plate::before{
   content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(34% 36% at 30% 42%, rgba(72,152,182,.22), transparent 70%),
+    radial-gradient(36% 38% at 40% 42%, rgba(72,152,182,.22), transparent 70%),
     linear-gradient(90deg,
-      #0A141C 0%,    #0B1720 34%,   #0C1B24 52%,   #10222A 58%,
-      #16282E 63%,   #223739 68.5%, #32474A 74%,   #47595A 79%,
-      #5F6E6B 84%,   #7C877F 88%,   #9BA69A 91.5%, #B4BDAF 94%,
-      #CBD0C5 96%,   #DFE1D8 97.8%, #EFEEE8 99%,   var(--paper) 100%)
+      #0A141C 0%,    #0B1720 40%,   #0C1B24 62%,   #10222A 70%,
+      #16282E 73.6%, #223739 77.5%, #32474A 81.4%, #47595A 85%,
+      #5F6E6B 88.6%, #7C877F 91.4%, #9BA69A 93.9%, #B4BDAF 95.7%,
+      #CBD0C5 97.1%, #DFE1D8 98.4%, #EFEEE8 99.3%, var(--paper) 100%)
 }
 
 .plate__mark{
@@ -74,10 +74,9 @@ a{color:inherit;text-decoration:none}
   -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)
 }
 .plate__frame{position:relative;flex:1;min-height:0;display:flex;align-items:center;width:100%;justify-content:center}
-.plate svg{height:100%;max-height:min(68vh,740px);width:auto;display:block;
-  margin-right:26%}
+.plate svg{height:100%;max-height:min(68vh,740px);width:auto;display:block}
 .plate .sweep{
-  position:absolute;inset:0 26% 0 0;pointer-events:none;mix-blend-mode:screen;overflow:hidden;
+  position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;overflow:hidden;
   background:linear-gradient(180deg,transparent 44%,rgba(120,215,255,.085) 50%,transparent 56%);
   animation:sweep 11s linear infinite
 }

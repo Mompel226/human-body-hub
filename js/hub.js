@@ -13,11 +13,14 @@
   var toastEl = document.getElementById('toast');
   var svg     = document.querySelector('#frame svg');
 
-  /* what the pinned label calls each landmark */
+  /* The label names everything that lights up, not just the anchor — otherwise
+     a second organ glowing (the thyroid with the brain, say) looks like a bug. */
   var LANDMARK = {
-    'o-stomach':'Stomach', 'o-heart':'Heart', 'o-lungs':'Lungs', 'o-brain':'Brain',
-    'o-urinary':'Kidneys & bladder', 'o-spleen':'Spleen & lymph nodes',
-    'o-muscles':'Skeletal muscle', 'o-veins':'Blood vessels', 'o-uterus':'Uterus & ovaries'
+    digestion:'Stomach, liver and gut',   circulation:'Heart and blood vessels',
+    immunity:'Spleen and lymph nodes',    'gas-exchange':'Lungs and airways',
+    respiration:'Skeletal muscle',        excretion:'Kidneys and bladder',
+    coordination:'Brain and thyroid gland', reproduction:'Uterus and ovaries',
+    drugs:'Carried in the blood'
   };
 
   var IDLE = '<span class="said__name">Nine topics, one body</span>' +
@@ -82,19 +85,44 @@
     toast('The anatomical plate is missing — run tools/inline-plate.py.');
   }
 
+  /* Where an organ really sits, in the plate's own coordinates.
+     getBBox() reports a shape before its transform is applied, so a mirrored
+     organ — the muscles, the veins — reported a position off the left of the
+     plate, and its hotspot could never be reached. Going out to the rendered
+     rectangle and back through the screen matrix gives the true position. */
+  function userSpaceBox(el) {
+    var m = svg.getScreenCTM();
+    if (!m) return el.getBBox();
+    var inv = m.inverse(), r = el.getBoundingClientRect();
+    var a = svg.createSVGPoint(), b = svg.createSVGPoint();
+    a.x = r.left;  a.y = r.top;
+    b.x = r.right; b.y = r.bottom;
+    a = a.matrixTransform(inv); b = b.matrixTransform(inv);
+    return { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y),
+             width: Math.abs(b.x - a.x), height: Math.abs(b.y - a.y) };
+  }
+
   /* a clickable disc over each landmark, small ones on top */
   function addHotspots() {
+    var vb = svg.viewBox.baseVal;
     T.filter(function (t) { return t.anchor && svg.querySelector('#' + t.anchor); })
       .map(function (t) {
-        var b = svg.querySelector('#' + t.anchor).getBBox();
+        var b = userSpaceBox(svg.querySelector('#' + t.anchor));
         return { t: t, b: b, area: b.width * b.height };
       })
       .sort(function (a, z) { return z.area - a.area; })
       .forEach(function (m) {
+        var r  = Math.max(34, Math.min(m.b.width, m.b.height) * 0.44);
+        /* an organ that runs off the edge of the crop still needs a target
+           the pointer can actually reach, so clamp the disc into view */
+        var cx = Math.min(Math.max(m.b.x + m.b.width / 2,  vb.x + r * 0.6),
+                          vb.x + vb.width  - r * 0.6);
+        var cy = Math.min(Math.max(m.b.y + m.b.height / 2, vb.y + r * 0.6),
+                          vb.y + vb.height - r * 0.6);
         var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        c.setAttribute('cx', m.b.x + m.b.width / 2);
-        c.setAttribute('cy', m.b.y + m.b.height / 2);
-        c.setAttribute('r', Math.max(34, Math.min(m.b.width, m.b.height) * 0.44));
+        c.setAttribute('cx', cx);
+        c.setAttribute('cy', cy);
+        c.setAttribute('r', r);
         c.setAttribute('class', 'hotspot');
         c.setAttribute('tabindex', '0');
         c.setAttribute('role', 'link');
@@ -148,7 +176,7 @@
     tag.style.left = (o.left + o.width / 2 - f.left) + 'px';
     tag.style.top  = Math.max(12, o.top - f.top - 10) + 'px';   /* sit above the organ, never on it */
     tag.style.setProperty('--c', 'var(--g-' + t.sys + ')');
-    tag.querySelector('.tag__pill').textContent = LANDMARK[t.anchor] || t.title;
+    tag.querySelector('.tag__pill').textContent = LANDMARK[t.sys] || t.title;
     tag.classList.add('on');
   }
 

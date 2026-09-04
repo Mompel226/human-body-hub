@@ -168,18 +168,39 @@
   "tris": 9000
  },
  {
-  "system": "respiration",
-  "organ": "quads",
-  "name": "Thigh muscle",
+  "system": "gas-exchange",
+  "organ": "intercostals",
+  "name": "Intercostal muscles",
   "meshes": 2,
-  "tris": 7000
+  "tris": 13000
  },
  {
   "system": "respiration",
-  "organ": "calves",
-  "name": "Calf muscle",
+  "organ": "muscle-arm",
+  "name": "Arm and shoulder muscle",
+  "meshes": 16,
+  "tris": 13000
+ },
+ {
+  "system": "respiration",
+  "organ": "muscle-trunk",
+  "name": "Chest and back muscle",
+  "meshes": 16,
+  "tris": 15000
+ },
+ {
+  "system": "respiration",
+  "organ": "muscle-abdomen",
+  "name": "Abdominal muscle",
   "meshes": 4,
-  "tris": 7000
+  "tris": 9000
+ },
+ {
+  "system": "respiration",
+  "organ": "muscle-leg",
+  "name": "Leg muscle",
+  "meshes": 18,
+  "tris": 17000
  },
  {
   "system": "excretion",

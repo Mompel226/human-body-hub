@@ -21,8 +21,8 @@ const GLOW = {
 /* what the caption calls each system's landmark */
 const LANDMARK = {
   digestion:'Stomach, liver and gut', circulation:'Heart and great vessels',
-  immunity:'Spleen and thymus',       'gas-exchange':'Lungs and airways',
-  respiration:'Skeletal muscle',      excretion:'Kidneys and bladder',
+  immunity:'Spleen and thymus',       'gas-exchange':'Lungs, airways and breathing muscles',
+  respiration:'Skeletal muscle, head to foot', excretion:'Kidneys and bladder',
   coordination:'Brain and eyes',      reproduction:'Reproductive organs',
   drugs:'Carried in the blood'
 };
@@ -76,7 +76,7 @@ addEventListener('resize', resize);
 const bySystem = {};           // system -> [mesh]
 let skin = null, bones = [], organs = [];
 
-new GLTFLoader().load('assets/model/body.glb?v=1', gltf => {
+new GLTFLoader().load('assets/model/body.glb?v=2', gltf => {
   const model = gltf.scene;
 
   model.traverse(o => {
