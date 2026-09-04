@@ -1,152 +1,143 @@
-# Biology Labs — the hub
+<div align="center">
 
-The landing page for the IGCSE Biology revision labs.
+# Biology Labs
 
-The screen is one surface, split in two: on the left the specimen lies on a dark
-slab so a lit organ actually glows; on the right it dissolves into paper, where
-the reading happens. Point at a lab and its system lights up in the body with the
-organ named; point at an organ and the lab it belongs to lights up. Left alone,
-the plate tours the nine systems by itself. It all fits on one screen.
+**Interactive revision for Cambridge IGCSE Biology 0610 — the human body.**
 
-**Live:** not published yet — see *Publishing* below.
+Nine topics live inside one body. Point at a lab and its organs light up where they
+really sit; open the lab and work through the topic with questions that mark themselves.
+
+[**→ Open the site**](https://mompel226.github.io/IGCSE-revision-app/) &nbsp;·&nbsp;
+[Light version](https://mompel226.github.io/IGCSE-revision-app/plate.html) &nbsp;·&nbsp;
+[Digestion Lab](https://mompel226.github.io/digestion-lab/)
+
+</div>
+
+---
+
+![The hub: a body reconstructed from MRI, with the gas exchange system lit](docs/img/hub-3d.png)
+
+The front door is a **human body reconstructed from MRI**. Drag it to turn it, scroll to
+zoom, toggle the skin and skeleton away. Point at a lab on the right and that system
+lights up in the body; point at an organ and its lab lights up in the list. Left alone,
+it walks through the nine systems by itself.
+
+---
+
+## The light version
+
+Not every student is on a fast connection, and the 3D page pulls 6 MB. So there is a
+second front door: the same nine topics on a flat anatomical plate, 1.5 MB, which loads
+instantly and even works opened straight from a memory stick.
+
+![The light version: a flat anatomical plate with the circulatory system lit](docs/img/hub-plate.png)
+
+The two pages link to each other, so nobody gets stuck on the heavy one.
+
+---
+
+## The nine topics
+
+| # | Topic | Lab | Lights up |
+|---|-------|-----|-----------|
+| 7 | Human nutrition | **Digestion Lab** — [live](https://mompel226.github.io/digestion-lab/) | stomach, liver, gall bladder, pancreas, the whole gut |
+| 9 | Transport in animals | Circulation Lab | heart, aorta, venae cavae, pulmonary and iliac vessels |
+| 10 | Diseases and immunity | Immunity Lab | spleen, thymus |
+| 11 | Gas exchange in humans | Gas Exchange Lab | trachea, bronchi, all five lung lobes, diaphragm |
+| 12 | Respiration | Respiration Lab | thigh and calf muscle — where it actually happens |
+| 13 | Excretion in humans | Excretion Lab | kidneys, ureters, bladder, renal vessels |
+| 14 | Coordination and response | Coordination Lab | brain, eyes, optic nerves, pituitary, adrenals |
+| 15 | Drugs | Drugs & AMR Lab | the bloodstream that carries them |
+| 16 | Reproduction | Reproduction Lab | reproductive organs |
+
+One is built. The other eight are on the way.
+
+---
+
+## The anatomy is measured, not drawn
+
+The body is not an illustration of a body. It is **BodyParts3D** — organs segmented from
+a real full-body MRI by the Database Center for Life Science in Japan. Every organ is a
+separate mesh, and they all share the scanner's coordinate frame, so nothing is
+positioned by hand: each organ sits where it was measured in the person it came from.
+
+Structures are chosen by **FMA identifier** (Foundational Model of Anatomy), listed in
+[`tools/model-build/manifest.py`](tools/model-build/manifest.py), so the selection can be
+checked against the ontology rather than taken on trust.
+
+**Checks that were run before shipping**
+
+- **Laterality** — the left/right convention was derived from the two meshes whose names
+  settle it, then 14 structures were tested. Liver, gall bladder and right lung on the
+  body's right; stomach, spleen, heart and left lung on the left; trachea, pancreas and
+  bladder on the midline. Thirteen as expected; the fourteenth, the descending aorta,
+  came out 12 mm left of the midline — which is correct anatomy, not an error.
+- **Vertical order** — brain → heart → liver → kidney → bladder → testis, strictly descending.
+- **Facing** — sternum anterior to the thoracic vertebrae, so the body faces the viewer
+  rather than being mirrored.
+
+**What the dataset does not contain**, stated plainly rather than faked:
+
+- It is a **male body** — no ovaries, uterus or oviducts. Topic 16 shows the male organs
+  in 3D; the flat plate carries the female ones.
+- **No spinal cord** — only its central canal, which would mislead if labelled as the cord,
+  so it is left out.
+- **No lymph nodes or tonsils** — Topic 10 shows spleen and thymus.
 
 ---
 
 ## Adding a lab
 
-Edit **`js/topics.js`**. Nothing else. Give the topic a `url` and set
-`status: 'live'`:
+Edit **one file**: [`js/topics.js`](js/topics.js). Give the topic a `url`, set
+`status: 'live'`, done — both pages pick it up.
 
 ```js
-{ id:'circulation', no:9, year:'Y10', side:'l', sys:'circulation', anchor:'o-heart',
+{ id:'circulation', no:9, year:'Y10', sys:'circulation', anchor:'o-heart',
   title:'Transport in animals', lab:'Circulation Lab',
-  blurb:'…',
+  blurb:'Double circulation, the heart, blood vessels and what blood carries.',
   status:'live', url:'https://mompel226.github.io/circulation-lab/' },
 ```
 
-- `sys` is the system that lights up on the plate.
-- `anchor` is the organ that gets lit and labelled (`o-heart`, `o-lungs`,
-  `o-stomach`, `o-liver`, `o-brain`, `o-urinary`, `o-spleen`, `o-muscles`,
-  `o-veins`, `o-uterus`, `o-intestines`, `o-pancreas`, `o-gallbladder`,
-  `o-trachea`, `o-larynx`, `o-thyroid`, `o-lymph-neck`, `o-lymph-axilla`).
-- `side` is unused in the current layout, but harmless — leave it.
-
-Each system has **two** colours in `css/hub.css`: `--g-<system>` is the glow on
-the dark side, `--i-<system>` is the same hue made readable on paper. Add both.
-If the anchor is a new organ, give it a display name in the `LANDMARK` map in
-`js/hub.js` so the pinned label reads properly.
+Each lab is its own repository and its own site. The hub is the signpost.
 
 ---
 
-## The anatomical plate
-
-`assets/anatomy/body.svg` is the specimen: a real anatomical plate, not a
-drawing of one. Every organ carries `data-sys` (its system) and an
-`id` of `o-<organ>`, so CSS can light one system and dim the rest.
-
-The plate is **inlined into `index.html`** so the page works even when it is
-opened straight from the file system, with no web server. After editing
-`body.svg`, run:
+## Layout
 
 ```
-python3 tools/inline-plate.py
+index.html                the front door — the 3D body
+plate.html                the light version — the flat anatomical plate
+js/topics.js              THE TOPIC REGISTER — the only file you edit to add a lab
+js/body3d.js              the 3D scene: loading, lighting, picking, idle tour
+js/hub.js                 the flat plate: hotspots, lighting, pinned labels, idle tour
+css/hub.css               design tokens, both layouts, both colour sets
+assets/model/body.glb     the MRI body — 40 organ groups, 345k triangles, 6.2 MB
+assets/anatomy/           the flat plate and its organ paintings
+tools/model-build/        rebuild the 3D body from BodyParts3D
+tools/inline-plate.py     re-inline the flat plate into plate.html
+docs/BUILD-NOTES.md       the long-form notes
 ```
 
-Organ paintings live in `assets/anatomy/organs/` as separate PNGs, positioned
-by the SVG at their true anatomical coordinates.
+**Running it locally.** `plate.html` opens by double-clicking. `index.html` does not —
+browsers block module scripts and model loading from `file://` — so serve the folder:
 
-### Sources and licences
-- Body, skeleton, vessels and organ paintings adapted from
-  **Mikael Häggström, *Human body diagrams*** (Wikimedia Commons, **CC0** —
-  public domain, no attribution required, credited anyway).
-- Uterus, ovaries and fallopian tubes from **Servier Medical Art**
-  (**CC BY 4.0** — attribution required, and it is in the page footer).
-
-Keep the footer credit if you add more Servier art.
-
----
-
-## Publishing
-
-The hub is a plain static site — no build step beyond `inline-plate.py`.
-
-Put this folder in its own GitHub repository and turn on GitHub Pages. Since
-the labs already live at `mompel226.github.io/digestion-lab/`, the repository
-should be named **`mompel226.github.io`**, which serves the hub at the root:
-
-- `mompel226.github.io` → this hub
-- `mompel226.github.io/digestion-lab/` → the first lab
-- `mompel226.github.io/<next-lab>/` → each one after that
-
-Any other repository name works too; the labs are linked by absolute URL, so
-nothing breaks.
-
----
-
-## Files
-
-```
-index.html                the front door: the 3D body
-plate.html                the light version: the flat anatomical plate,
-                          inlined so it also opens from the file system
-css/hub.css               design tokens, the plate treatment, the index
-js/topics.js              THE TOPIC REGISTER — the file you edit
-js/hub.js                 plate.html: list, hotspots, lighting, pinned label, idle tour
-js/body3d.js              index.html: the 3D scene, picking, lighting, idle tour
-assets/model/body.glb     the MRI body, 40 organ groups
-.nojekyll                 stops GitHub Pages running the files through Jekyll
-assets/anatomy/body.svg   the specimen (source of the inlined plate)
-assets/anatomy/organs/    the organ paintings
-tools/inline-plate.py     re-inlines body.svg into index.html
+```bash
+python3 -m http.server 8744
 ```
 
 ---
 
-## The 3D body (`index.html` — the front door)
+## Sources and licences
 
-A second, heavier landing page: the same nine topics on a body reconstructed
-from MRI, which you can turn and look inside.
+| What | Source | Licence |
+|------|--------|---------|
+| The 3D body | [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html), © The Database Center for Life Science | **CC BY-SA 2.1 Japan** |
+| The flat plate | [M. Häggström, *Human body diagrams*](https://commons.wikimedia.org/wiki/Human_body_diagrams) | CC0 (public domain) |
+| Uterus and ovaries | [Servier Medical Art](https://smart.servier.com) | CC BY 4.0 |
+| 3D rendering | [three.js](https://threejs.org) | MIT |
 
-**It needs to be served over http** (GitHub Pages, or the local preview server).
-It cannot be opened by double-clicking the file, because browsers block module
-scripts and model loading from `file://`. `plate.html` can.
+> **ShareAlike applies to the body model.** `assets/model/body.glb` is a derivative of
+> BodyParts3D, so publishing it licenses that file onward under CC BY-SA 2.1 Japan. The
+> credit line in the page footer is part of that obligation — please keep it.
 
-### Where the body comes from
-`assets/model/body.glb` (6.2 MB, 345,000 triangles, 40 organ groups) is built
-from **BodyParts3D v3.0** — 3D models segmented from a real full-body MRI by
-the Database Center for Life Science in Japan. Every organ is a separate mesh
-and they all share one coordinate frame, so nothing is positioned by hand: each
-organ sits where it was measured in the body it came from.
-
-Rebuild it with the scripts in the scratch pipeline (`manifest.py`,
-`build_glb.py`); `manifest.py` lists every structure by its FMA identifier, so
-the selection can be checked against the Foundational Model of Anatomy rather
-than taken on trust.
-
-### Accuracy checks that were run
-- **Laterality**: liver, gall bladder and right lung on the body's right;
-  stomach, spleen, heart and left lung on the left; trachea, pancreas and
-  bladder on the midline. 13 of 14 as expected — the fourteenth, the descending
-  aorta, sits ~12 mm left of the midline, which is correct anatomy.
-- **Vertical order**: brain → heart → liver → kidney → bladder → testis, strictly
-  descending.
-- **Facing**: sternum anterior to the thoracic vertebrae, so the body faces the
-  camera rather than being reversed.
-
-### What this dataset does not contain
-- **It is a male body.** There are no ovaries, uterus or oviducts, so Topic 16
-  shows the male reproductive system only. The flat plate on `index.html` has
-  the female organs (from Servier).
-- **No spinal cord** — only the central canal, which would be misleading to
-  label as the cord, so it is left out. Topic 14 shows brain, eyes, optic
-  nerves, pituitary and adrenal glands.
-- **No lymph nodes or tonsils** — Topic 10 shows the spleen and thymus.
-- The meshes carry no textures. Surface colour is authored in `build_glb.py`
-  and lit in the browser.
-
-### Licence — read this before publishing
-BodyParts3D is **CC Attribution-ShareAlike 2.1 Japan**. Two obligations:
-1. The credit line in the page footer must stay.
-2. ShareAlike: `body.glb` is a derivative, so if you publish it you are
-   licensing that model onward under the same terms. That covers the model
-   file, not the rest of the site.
+Built for Year 10 and 11 IGCSE Biology at NLCS Jeju.
