@@ -135,13 +135,15 @@ function focusSystem(t) {
 
   organs.forEach(o => {
     const on = wanted.has(o.userData.system);
-    o.visible = on ? true : (o.userData.muscle ? muscleOn : true);
+    /* a layer you switched off stays off — pointing at its lab must not
+       bring it back, or it sits in front of the organs you wanted to reach */
+    o.visible = o.userData.muscle ? muscleOn : true;
     o.material.opacity  = on ? 1 : 0.05;
     o.material.emissive.copy(on ? glow : new THREE.Color(0x000000));
     o.material.emissiveIntensity = on ? 0.42 : 0;
   });
-  if (skin)  skin.material.opacity = 0.035;
-  bones.forEach(b => { b.material.opacity = 0.07; });
+  if (skin)  { skin.visible = skinOn; skin.material.opacity = 0.035; }
+  bones.forEach(b => { b.visible = boneOn; b.material.opacity = 0.07; });
 
   said.style.setProperty('--c', 'var(--g-' + t.sys + ')');
   said.innerHTML = '<span class="said__name">' + t.lab + '</span>' +
@@ -155,8 +157,8 @@ function clearSystem() {
     o.material.opacity = o.userData.baseOpacity;
     o.material.emissive.setHex(0x000000); o.material.emissiveIntensity = 0;
   });
-  if (skin) skin.material.opacity = skinOn ? REST.skin : 0;
-  bones.forEach(b => { b.material.opacity = boneOn ? REST.skeleton : 0; });
+  if (skin) { skin.visible = skinOn; skin.material.opacity = REST.skin; }
+  bones.forEach(b => { b.visible = boneOn; b.material.opacity = REST.skeleton; });
   said.style.removeProperty('--c');
   said.innerHTML = IDLE;
 }
@@ -219,10 +221,8 @@ tgBone.addEventListener('click', () => {
 });
 tgMus.addEventListener('click', () => {
   muscleOn = !muscleOn; tgMus.setAttribute('aria-pressed', muscleOn);
-  /* The button is the last word. Without this, a system lit by the idle tour
-     kept its own muscle on screen and the toggle looked broken. Pointing at
-     Respiration still reveals the muscle — focusSystem sees to that. */
-  if (!muscleOn) clearSystem();
+  /* The button is the last word: hidden muscle stays hidden even while its
+     own lab is lit, so it can never sit in front of the organs underneath. */
   muscles.forEach(m => { m.visible = muscleOn; });
 });
 tgSpin.addEventListener('click', () => {
@@ -239,7 +239,7 @@ function pick(ev) {
   ptr.x =  ((ev.clientX - r.left) / r.width)  * 2 - 1;
   ptr.y = -((ev.clientY - r.top)  / r.height) * 2 + 1;
   ray.setFromCamera(ptr, camera);
-  const hit = ray.intersectObjects(organs, false)[0];
+  const hit = ray.intersectObjects(organs.filter(o => o.visible), false)[0];
   return hit ? BY_SYS[hit.object.userData.system] : null;
 }
 

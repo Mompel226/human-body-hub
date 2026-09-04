@@ -20,7 +20,9 @@ by **Dr Daniel Mompel Riera** · NLCS Jeju
 ![The hub: a body reconstructed from MRI, with the gas exchange system lit](docs/img/hub-3d.png)
 
 The front door is a **human body reconstructed from MRI**. Drag it to turn it, scroll to
-zoom, and switch the skin, skeleton or muscle off to see what lies underneath. Point at a lab on the right and that system
+zoom, and peel the skin, skeleton and muscle away to reach what lies underneath.
+A layer you switch off stays off — pointing at its own lab will not bring it
+back, so it can never sit between you and the organ you are trying to click. Point at a lab on the right and that system
 lights up in the body; point at an organ and its lab lights up in the list. Left alone,
 it walks through the nine systems by itself.
 
