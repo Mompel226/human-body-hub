@@ -1,17 +1,23 @@
 <div align="center">
 
-# Biology Labs
+<h1>🫀 &nbsp;Biology Labs</h1>
 
 **Interactive revision for Cambridge IGCSE Biology 0610 — the human body.**
 
-Nine topics live inside one body. Point at a lab and its organs light up where they
-really sit; open the lab and work through the topic with questions that mark themselves.
+Nine topics live inside one body. Point at a lab and its organs light up where they really
+sit; open the lab and work through the topic with questions that mark themselves.
+
+<br>
+
+[![Open the site](https://img.shields.io/badge/▶_Open_the_site-3D7A54?style=for-the-badge)](https://mompel226.github.io/IGCSE-revision-app/)
+[![Light version](https://img.shields.io/badge/Light_version-6FA287?style=for-the-badge)](https://mompel226.github.io/IGCSE-revision-app/plate.html)
+[![Digestion Lab](https://img.shields.io/badge/Digestion_Lab-C9A227?style=for-the-badge)](https://mompel226.github.io/digestion-lab/)
+
+![IGCSE Biology 0610](https://img.shields.io/badge/IGCSE_Biology-0610-3D7A54)
+![Free to use](https://img.shields.io/badge/students-no_sign--up_needed-6FA287)
+![Marks](https://img.shields.io/badge/teachers-marks_in_Google_Sheets-C9A227)
 
 by **Dr Daniel Mompel Riera** · NLCS Jeju
-
-[**→ Open the site**](https://mompel226.github.io/IGCSE-revision-app/) &nbsp;·&nbsp;
-[Light version](https://mompel226.github.io/IGCSE-revision-app/plate.html) &nbsp;·&nbsp;
-[Digestion Lab](https://mompel226.github.io/digestion-lab/)
 
 </div>
 
@@ -19,149 +25,258 @@ by **Dr Daniel Mompel Riera** · NLCS Jeju
 
 ---
 
-## The nine topics
+## 🧑‍🎓 For your students — there is nothing to set up
 
-| # | Topic | Lab |
-|---|-------|-----|
-| 7 | Human nutrition | **Digestion Lab** — [live](https://mompel226.github.io/digestion-lab/) |
-| 9 | Transport in animals | Circulation Lab |
-| 10 | Diseases and immunity | Immunity Lab |
-| 11 | Gas exchange in humans | Gas Exchange Lab |
-| 12 | Respiration | Respiration Lab |
-| 13 | Excretion in humans | Excretion Lab |
-| 14 | Coordination and response | Coordination Lab |
-| 15 | Drugs | Drugs & AMR Lab |
-| 16 | Reproduction | Reproduction Lab |
+> [!TIP]
+> **Send them the link and you are done.**
+> [mompel226.github.io/IGCSE-revision-app](https://mompel226.github.io/IGCSE-revision-app/)
+>
+> No account, no sign-up, no install, nothing to pay. It works on a phone, a Chromebook or
+> a school PC, and their progress is saved in their own browser. Anyone in the world is
+> welcome to use it.
 
-One is built; the other eight are on the way. Each lab is its own repository and its own
-site — the hub is the signpost.
+| # | Topic | Lab | |
+|:--:|-------|-----|:--:|
+| 7 | Human nutrition | [**Digestion Lab**](https://mompel226.github.io/digestion-lab/) | 🟢 live |
+| 9 | Transport in animals | Circulation Lab | ⚪ soon |
+| 10 | Diseases and immunity | Immunity Lab | ⚪ soon |
+| 11 | Gas exchange in humans | Gas Exchange Lab | ⚪ soon |
+| 12 | Respiration | Respiration Lab | ⚪ soon |
+| 13 | Excretion in humans | Excretion Lab | ⚪ soon |
+| 14 | Coordination and response | Coordination Lab | ⚪ soon |
+| 15 | Drugs | Drugs & AMR Lab | ⚪ soon |
+| 16 | Reproduction | Reproduction Lab | ⚪ soon |
 
-**Two front doors.** `index.html` is a body reconstructed from MRI: turn it, zoom, peel
-back skin, skeleton and muscle. `plate.html` is the same nine topics on a flat anatomical
-plate — 1.5 MB against 6 MB, for a slow connection or a memory stick. They link to each
-other, so nobody is stuck on the heavy one.
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**🩻 The 3D body** — `index.html`
+
+Reconstructed from a real MRI scan. Turn it, zoom, and peel back skin, skeleton and muscle
+to reach what lies underneath. 6 MB.
+
+</td>
+<td width="50%" valign="top">
+
+**🗺️ The light version** — `plate.html`
+
+The same nine topics on a flat anatomical plate. 1.5 MB, loads instantly, and works from a
+memory stick. For a slow connection.
+
+</td>
+</tr>
+</table>
 
 ![The light version: a flat anatomical plate with the circulatory system lit](docs/img/hub-plate.png)
 
-The body is **BodyParts3D**, organs segmented from a real MRI — nothing is placed by hand.
-What was checked, and what the dataset lacks, is in
-[`docs/BUILD-NOTES.md`](docs/BUILD-NOTES.md).
+<div align="center">
+
+*Every question marks itself and tells the student which parts are wrong — never the answer.
+They keep going until it is right.*
+
+</div>
 
 ---
 
-# Setting up the marks spreadsheet
+<div align="center">
 
-One Google Sheet collects **every** lab: a tab per lab, your Google Classroom rosters
-beside them, one script and one URL for all nine.
+## 📊 Would you like to see how your students are doing?
 
-> **The labs are public and stay public.** Anyone in the world can work through one and
-> press Hand in. A hand-in is recorded **only** when the Google account that signed in is
-> on your **Students** tab — for everyone else nothing is written down at all: no row, no
-> name, no email. They still get their completion code. That decision is made on the
-> server, so it holds.
+**You can — every score, every class, in one Google Sheet of your own.**
+It takes about half an hour, once, and you do not need to know any code.
 
-You do not need to know any Apps Script. About ten minutes, once, for all nine labs.
+</div>
 
-### 1 · Build the Sheet
+One Google Sheet with a tab per lab. Each tab is your class list: every student has a row from
+the moment you import them from Google Classroom, and handing in fills theirs in — score,
+percentage, how many checks it took, how many they got right first time, how long they worked.
 
-| # | Do this |
+```mermaid
+graph LR
+  A["🧑‍🎓 Your student<br/>works through a lab"] --> B["presses<br/>Hand in"]
+  B --> C{"Signs in with<br/>Google"}
+  C -->|"on your class list"| D["✅ their row fills in<br/>on your Sheet"]
+  C -->|"anyone else in the world"| E["🌍 nothing saved,<br/>anywhere"]
+```
+
+> [!IMPORTANT]
+> **The labs stay open to everyone.** A hand-in is recorded **only** when the Google account
+> that signed in is on your class list. For everybody else nothing is written down at all —
+> no row, no name, no email. That decision is made on the server, so it holds.
+
+<details>
+<summary><h3>👉 &nbsp;Open this to set it up — step by step</h3></summary>
+
+<br>
+
+### Before you start
+
+You will need three things, all free:
+
+| | |
 |:--:|---|
-| **1** | Make a new Google Sheet. The name does not matter. |
-| **2** | **Extensions ▸ Apps Script.** Delete what is there, paste in **[`Code.gs`](apps-script/Code.gs)** (copy button on that page, or [inlined below](#the-two-files-to-paste)). No id to fill in — the script works out which Sheet it lives in. |
-| **3** | **+** beside *Files* ▸ **HTML** ▸ name it exactly `ClassroomImport` ▸ paste in **[`ClassroomImport.html`](apps-script/ClassroomImport.html)**. Save. |
-| **4** | **Services ▸ +** (left sidebar) ▸ **Google Classroom API** ▸ **Add**. Leave the identifier as `Classroom`. |
-| **5** | **Run ▸ `setup`**, and authorise. It builds and formats every tab. |
-
-### 2 · Switch on sign-in
-
-Sign-in is what tells your students apart from the rest of the world, so **nothing is
-recorded until this is done**. It is the one step with a trap in it.
-
-A **Client ID** is a name-tag for your app, issued by Google. Not a password, not a secret —
-it sits in plain sight in the page source. One long string ending
-`.apps.googleusercontent.com`, and it goes in **two places, the same string in both**:
-`googleClientId` in each lab's `js/config.js`, so the page can ask Google for a sign-in, and
-`CLIENT_ID` in `Code.gs`, so the script can check the token it gets back was made for *your*
-app and not somebody else's.
-
-| # | Do this |
-|:--:|---|
-| **6** | **console.cloud.google.com** ▸ pick or make a project. |
-| **7** | **Google Auth Platform ▸ Branding** *(older console: APIs & Services ▸ OAuth consent screen)*. **Do this first** — Google will not issue an id without it. App name, your email, save. User type **External**. |
-| **8** | **Audience ▸ Publish app.** Left on *Testing*, your students are told the app is blocked. No review is needed: sign-in asks for name and email only. |
-| **9** | **Credentials ▸ Create credentials ▸ OAuth client ID ▸ Web application.** Under **Authorised JavaScript origins** put your Pages origin and nothing else — `https://mompel226.github.io`, or `https://<your-username>.github.io` if you have forked this. No path, no trailing slash. Leave redirect URIs empty. |
-| **10** | **Create**, then paste the id into `CLIENT_ID` at the top of `Code.gs`, and into `googleClientId` in every lab's `js/config.js`. |
-
-### 3 · Deploy, and point the labs at it
-
-| # | Do this |
-|:--:|---|
-| **11** | **Deploy ▸ New deployment ▸ Web app.** *Execute as* **Me**, *Who has access* **Anyone**. Deploy, copy the `/exec` URL. |
-| **12** | Paste that URL into each lab's `js/config.js` as `submitUrl`. Commit and push. |
-
-> **After any later edit to the script:** Deploy ▸ Manage deployments ▸ ✏️ ▸ *Version* ▸ **New version** ▸ Deploy. Editing alone changes nothing, and the pencil keeps the same URL.
-
-**To check it:** open a lab and press *Hand in*. Signed in as one of your students it lands
-on their row; as anyone else, nothing is written anywhere.
+| 🐙 | **A GitHub account** — [github.com/signup](https://github.com/signup). This is where your own copy of the lab will live. |
+| 📗 | **A Google account** — your school one. It holds the spreadsheet. |
+| 🏫 | **Google Classroom** with your classes in it, so the student names import themselves. |
 
 ---
 
-## When something is wrong
+### Step 1 · Make your own copy of the lab 🐙
 
-Start with **🧪 Biology Labs ▸ Check the set-up** — it says in one box whether the Sheet is
-found, whether Classroom is on and authorised, **whether sign-in is set up**, and how much
-is in there.
+> ### ⚠️ &nbsp;The step people skip
+> **Nothing works without it.** If you share *my* link with your students, their hand-ins go
+> to *my* script — and since they are not on my class list, nothing is saved for anyone. You
+> need your own copy, at your own web address, pointing at your own spreadsheet.
+
+You do not need to know GitHub. It is three clicks and one edit.
+
+| # | Do this |
+|:--:|---|
+| **1** | Go to **[github.com/Mompel226/digestion-lab](https://github.com/Mompel226/digestion-lab)** and press **Fork** (top right) ▸ **Create fork**. You now have your own copy. |
+| **2** | In *your* copy: **Settings ▸ Pages**. Under *Branch* choose **master**, folder **/ (root)**, **Save**. Wait a minute or two. |
+| **3** | Your lab is now live at **`https://YOUR-USERNAME.github.io/digestion-lab/`**. Open it and check it loads. Write that address down — you need it twice below. |
+
+*(To change a file in your copy: open it on GitHub, press the **✏️ pencil**, edit, then
+**Commit changes**. That is all the GitHub you need.)*
+
+---
+
+### Step 2 · Build the spreadsheet 📗
+
+| # | Do this |
+|:--:|---|
+| **4** | Make a **new Google Sheet**. The name does not matter. |
+| **5** | In it: **Extensions ▸ Apps Script**. Delete whatever is there and paste in **[`Code.gs`](apps-script/Code.gs)** — open that file and use GitHub's copy button, or take it from [the copy at the bottom of this page](#-the-two-files-to-paste). |
+| **6** | Press **+** beside *Files* ▸ **HTML** ▸ name it exactly `ClassroomImport` ▸ paste in **[`ClassroomImport.html`](apps-script/ClassroomImport.html)**. Save. |
+| **7** | In the left sidebar, beside **Services**, press **+** ▸ choose **Google Classroom API** ▸ **Add**. Leave the identifier as `Classroom`. |
+| **8** | **Run ▸ `setup`**, and authorise when asked — it is your own script, on your own Sheet. It builds and formats every tab. |
+
+> 💡 &nbsp;**There is no id to paste anywhere.** The script sits inside your Sheet, so it
+> works out which one it is the first time you run it, and remembers.
+
+---
+
+### Step 3 · Switch on sign-in 🔑
+
+Signing in is how the spreadsheet tells *your* students from the rest of the world, so
+**nothing at all is recorded until this is done.** It is the fiddliest step; take it slowly.
+
+A **Client ID** is a name-tag for your app, issued by Google. It is not a password and not a
+secret — it sits in plain sight in the page. One long string ending
+`.apps.googleusercontent.com`, and it goes in **two places, the same string in both**.
+
+| # | Do this |
+|:--:|---|
+| **9** | Go to **[console.cloud.google.com](https://console.cloud.google.com)** ▸ pick a project or make one (any name). |
+| **10** | **Google Auth Platform ▸ Branding** *(older console: APIs & Services ▸ OAuth consent screen)*. Fill in an app name and your email, and save. User type **External**. |
+| **11** | **Audience ▸ Publish app.** |
+| **12** | **Credentials ▸ Create credentials ▸ OAuth client ID ▸ Web application.** Under **Authorised JavaScript origins** put **`https://YOUR-USERNAME.github.io`** — your address from step 3, with **no path and no trailing slash**. Leave *redirect URIs* empty. Press **Create** and copy the id. |
+
+> ### ⚠️ &nbsp;Two traps in this step
+> **Step 10 must come before step 12.** Google will not issue an id until the consent screen
+> exists, and clicking straight to *Create credentials* just bounces you.
+>
+> **Step 11 is not optional.** Left on *Testing*, your students are told *“access blocked:
+> this app has not completed verification”*. Publishing needs no review: signing in asks for a
+> name and an email only, which Google counts as non-sensitive.
+
+---
+
+### Step 4 · Join the two together 🔗
+
+| # | Do this |
+|:--:|---|
+| **13** | In the Apps Script editor, paste your Client ID into **`CLIENT_ID`** at the very top of `Code.gs`. |
+| **14** | **Deploy ▸ New deployment ▸ Web app.** *Execute as* **Me**, *Who has access* **Anyone**. Press **Deploy** and copy the **`/exec` URL**. |
+| **15** | In **your fork** of the lab, open **`js/config.js`**, press the ✏️ pencil, and fill in two lines — `submitUrl:` your `/exec` URL, and `googleClientId:` the same Client ID as step 13. **Commit changes.** |
+
+> ### 🔁 &nbsp;Remember this one for ever
+> **Every time you edit the script from now on:** Deploy ▸ Manage deployments ▸ **✏️ pencil**
+> ▸ *Version* ▸ **New version** ▸ Deploy. Editing alone changes nothing. Use the pencil rather
+> than *New deployment* and the URL stays the same, so you never touch `config.js` again.
+
+---
+
+### Step 5 · Bring your classes in, and test it 🎓
+
+| # | Do this |
+|:--:|---|
+| **16** | In your Sheet: **🧪 Biology Labs ▸ Import students from Classroom…** Tick your courses, check the class codes it guesses, **Import**. Every lab tab fills with names. |
+| **17** | Open **your** lab link, answer one question, press **Hand in**, and sign in as yourself. |
+
+If you are on the Students tab, your row fills in. If you are not — you are the teacher, after
+all — nothing is saved, which is the system working. Add yourself to the **Students** tab by
+hand to try it: unhide the *School email* column, and type your name, a class and your email
+into an empty row.
+
+> ### ✅ &nbsp;From now on, share your own link
+> `https://YOUR-USERNAME.github.io/digestion-lab/` — not mine. That is the one wired to your
+> spreadsheet.
+
+---
+
+### When something is wrong 🩺
+
+Start with **🧪 Biology Labs ▸ Check the set-up**. It says in one box whether the Sheet is
+found, whether Classroom is switched on and authorised, **whether sign-in is set up**, and how
+much is in there.
 
 | What you see | What it means |
 |---|---|
-| `Script function not found: …` | the pasted script is older than its menu. Re-paste [`Code.gs`](apps-script/Code.gs) in full |
-| `Classroom is not defined` | step 4 was missed — Services ▸ + ▸ Google Classroom API ▸ Add, then run `setup` |
-| `Illegal spreadsheet id or key: …` | the **deployment** is an older snapshot than the editor — redeploy with the pencil, *New version* |
-| the import window lists no courses | that account has no **active** Classroom courses |
-| the sign-in button never appears | `googleClientId` is empty in that lab's `js/config.js`, or the page is cached — bump the `?v=` stamps |
-| "access blocked: this app has not completed verification" | step 8 was missed — Audience ▸ Publish app |
-| sign-in works, but nothing reaches the Sheet | `CLIENT_ID` is empty, is a different string, or the deployment is stale |
-| a lab's tab has no names in it | nobody has been imported yet |
-| a stranger signs in and nothing is recorded | working as intended |
-| a permission prompt on first run | expected — your own script, your own Sheet, your own Classroom |
+| `Script function not found: …` | the pasted script is older than its menu — re-paste [`Code.gs`](apps-script/Code.gs) in full |
+| `Classroom is not defined` | step 7 was missed — Services ▸ + ▸ Google Classroom API ▸ Add, then run `setup` |
+| `Illegal spreadsheet id or key: …` | the **deployment** is older than the editor — redeploy with the ✏️ pencil, *New version* |
+| the import window lists no courses | that Google account has no **active** Classroom courses |
+| no sign-in button on the lab | `googleClientId` is empty in your fork's `js/config.js` |
+| `access blocked: this app has not completed verification` | step 11 was missed — Audience ▸ **Publish app** |
+| sign-in works, but nothing reaches the Sheet | `CLIENT_ID` is empty, is a different string from `googleClientId`, or the deployment is stale |
+| a lab's tab has no names in it | nobody has been imported yet — step 16 |
+| a stranger signs in and nothing is recorded | working as intended 🌍 |
+
+</details>
 
 ---
 
-## Using it
+## 🗂️ Living with it
 
-**Import your classes.** 🧪 Biology Labs ▸ *Import students from Classroom…* lists your
-active courses and guesses a class code for each. Tick, check the codes, Import. Closing the
-window does not stop it. It formats the whole spreadsheet as it finishes, so there is nothing
-to press afterwards. Run it again whenever somebody joins — students are keyed on their school
-email, so it adds the new ones, moves anyone whose class changed, and never duplicates.
+<details>
+<summary><b>What each tab holds</b></summary>
 
-**The Students tab is the dashboard:** every student, their class, and their best score in
-each of the nine labs, red through amber to green. Filter *Class* to see one class; the name
-and class stay put as you scroll across.
+<br>
 
-**Each lab's tab is that class list again.** Every student has a row from the moment they are
-imported — name and class filled in, marks blank — and handing in fills theirs in: score, %,
-whether they finished, how many checks it took, how many were right first time, how long they
-had been working, and how each station went. A blank row is somebody who has not handed in
-yet, not a gap in the data.
+| Tab | What is in it |
+|---|---|
+| 🟢 **Students** | the dashboard — every student, their class, and their best score in **every** lab, red through amber to green |
+| 🟢 **Digestion**, **Circulation**, … | one tab per lab, and each is your class list again: a row per student from the moment they are imported |
+| 🟡 **Labs** | one row per lab: how many questions it has, how many hand-ins it has had |
+| 🟡 **Setup** | what everything is, your web app URL, and the tick-box buttons |
+| 🔴 **Rejected** | a hand-in from one of your students whose numbers did not add up, with the reason |
+
+Every tab explains itself: hover a heading to see what the column is for. A **dark green
+heading** is filled in for you; an **amber heading with a ✎** is yours to change.
+
+**Importing a class formats everything** — there is nothing to press afterwards. Run the
+import again whenever somebody joins: students are keyed on their school email, so it adds
+the new ones, moves anyone whose class changed, and never duplicates.
 
 **Handing in twice is fine and does not make a second row.** *Hand-ins* counts the goes and
 *Last hand-in* always moves, but the score is replaced only when the new attempt **beat** the
-old one — a careless re-run cannot wipe out a good result. Students are matched to their row
-by the school email they signed in with, never by the name they type.
+old one — a careless re-run cannot wipe out a good result.
 
-Every tab explains itself: hover a heading to see what the column is for; a **dark green
-heading** is filled in for you, an **amber heading with a ✎** is yours to change.
+</details>
 
 <details>
 <summary><b>What is on the menu</b></summary>
+
+<br>
 
 | 🧪 Biology Labs ▸ | What it does |
 |---|---|
 | **Import students from Classroom…** | the main one. Adds new students, then builds and formats everything |
 | **Check the set-up** | is the Sheet found, is Classroom on and authorised, is sign-in set up |
 | **Refresh everyone's progress** | re-reads the lab tabs into the dashboard |
-| **Tidy up** | rebuild anything missing and re-apply the formatting — the same as Run ▸ `setup` |
+| **Tidy up** | rebuild anything missing and re-apply the formatting |
 
 All but the import also sit as tick-box buttons on the **Setup** tab; the import opens a
 window, which a spreadsheet button is not allowed to do.
@@ -170,6 +285,8 @@ window, which a spreadsheet button is not allowed to do.
 
 <details>
 <summary><b>Reading a completion code</b></summary>
+
+<br>
 
 Every hand-in shows the student a **completion code** — `DL-3CL9-Q3MP`. It is a checksum of
 their name, class, score and the lab, and **nothing about it is stored anywhere**. Paste one
@@ -183,14 +300,16 @@ bounded list of names — and the only such list is your **Students** tab. So:
 * a code from **anyone else in the world** cannot be resolved at all. Their name could be
   anything, so it says so rather than guessing.
 
-It is not a lookup — when a hand-in arrives, the result is already in the lab's tab. It is
-for the hand-in that **did not** arrive (they were offline, closed the tab, or could not sign
-in but still have their code), and for telling a real code from an invented one.
+It is not a lookup — when a hand-in arrives, the result is already in the lab's tab. It is for
+the hand-in that **did not** arrive (they were offline, closed the tab, or could not sign in
+but still have their code), and for telling a real code from an invented one.
 
 </details>
 
 <details>
 <summary><b>Why “Who has access: Anyone” is safe</b></summary>
+
+<br>
 
 It has to be *Anyone*, because the labs are ordinary web pages with no login: the student's
 browser posts to the script as a stranger. *Anyone with a Google Account* makes the browser
@@ -201,10 +320,10 @@ your Drive. The URL exposes exactly two things: a **GET** that says the endpoint
 and a **POST** that can fill in one row — and only for a signed-in account on your Students
 tab. A stranger with the URL cannot write anything, and cannot read a single mark.
 
-A hand-in from one of your own students that does not add up — a completion code that does
-not recompute, a score above the total — goes to a **Rejected** tab with the reason, never
-into a lab's tab. And a forged row usually looks forged: 113/113 in 113 checks, 0 right first
-time, "0 min" since starting. Sort by *Checks* and it stands out.
+A hand-in from one of your own students that does not add up — a completion code that does not
+recompute, a score above the total — goes to the **Rejected** tab with the reason, never into
+a lab's tab. And a forged row usually looks forged: 113/113 in 113 checks, 0 right first time,
+"0 min" since starting. Sort by *Checks* and it stands out.
 
 To collect nothing at all, leave `submitUrl` or `googleClientId` empty: everyone gets a
 completion code on screen and nothing is posted anywhere.
@@ -213,6 +332,8 @@ completion code on screen and nothing is posted anywhere.
 
 <details>
 <summary><b>Pushing marks into Google Classroom</b></summary>
+
+<br>
 
 Classroom only lets a script grade work that **the same script created** — an assignment made
 by hand in the Classroom UI cannot be graded through the API. So either set an assignment
@@ -229,7 +350,9 @@ cannot match is left alone and named in the log.
 
 </details>
 
-### The two files to paste
+---
+
+## 📋 The two files to paste
 
 
 <details>
@@ -1645,9 +1768,14 @@ function showFinalSummary(sels) {
 
 ---
 
-## Adding a lab
+## 🛠️ For developers
 
-Edit **one file**: [`js/topics.js`](js/topics.js). Give the topic a `url`, set
+<details>
+<summary><b>Adding a lab, the layout, and running it locally</b></summary>
+
+<br>
+
+**Adding a lab.** Edit one file: [`js/topics.js`](js/topics.js). Give the topic a `url`, set
 `status: 'live'` — both front doors pick it up.
 
 ```js
@@ -1660,9 +1788,7 @@ Edit **one file**: [`js/topics.js`](js/topics.js). Give the topic a `url`, set
 For the lab to link back here, add one line to its header — see
 [`docs/link-back.md`](docs/link-back.md).
 
----
-
-## Layout
+**Layout.**
 
 ```
 index.html                the front door — the 3D body
@@ -1681,22 +1807,33 @@ tools/inline-plate.py     re-inline the flat plate into plate.html
 docs/BUILD-NOTES.md       the long-form notes
 ```
 
-`plate.html` opens by double-clicking; `index.html` does not — browsers block module
-scripts and model loading from `file://` — so serve the folder:
+**Running it locally.** `plate.html` opens by double-clicking; `index.html` does not —
+browsers block module scripts and model loading from `file://` — so serve the folder:
 
 ```bash
 python3 -m http.server 8744
 ```
 
-After changing anything in `apps-script/`, run both:
+**After changing anything in `apps-script/`,** run both:
 
 ```bash
 node tools/gastest.js apps-script/Code.gs && node tools/sync-readme.mjs
 ```
 
+The first runs the whole script against a stand-in for Google Sheets — every menu item and
+button, an import, a first hand-in and a second, a forged one, a stranger's — and fails on
+anything undefined. The second copies the files into the paste blocks above, which is how
+teachers install it.
+
+**The anatomy is measured, not drawn.** The body is **BodyParts3D**, organs segmented from a
+real full-body MRI, chosen by FMA identifier — nothing is placed by hand. What was checked,
+and what the dataset lacks, is in [`docs/BUILD-NOTES.md`](docs/BUILD-NOTES.md).
+
+</details>
+
 ---
 
-## Sources and licences
+## 📖 Sources and licences
 
 | What | Source | Licence |
 |------|--------|---------|
@@ -1705,19 +1842,25 @@ node tools/gastest.js apps-script/Code.gs && node tools/sync-readme.mjs
 | Uterus and ovaries | [Servier Medical Art](https://smart.servier.com) | CC BY 4.0 |
 | 3D rendering | [three.js](https://threejs.org) | MIT |
 
+> [!NOTE]
 > **ShareAlike applies to the body model.** `assets/model/body.glb` is a derivative of
-> BodyParts3D, so publishing it licenses that file onward under CC BY-SA 2.1 Japan. The
-> credit line in the page footer is part of that obligation — please keep it.
+> BodyParts3D, so publishing it licenses that file onward under CC BY-SA 2.1 Japan. The credit
+> line in the page footer is part of that obligation — please keep it when you fork.
 
 ---
 
-## Who made this
+<div align="center">
+
+### Who made this
 
 **Dr Daniel Mompel Riera** — Biology, North London Collegiate School Jeju.
 
-Built for his Year 10 and 11 IGCSE Biology classes. Questions, corrections, or if you would
-like to use it with your own students, please get in touch:
-**[dmompelriera@nlcsjeju.kr](mailto:dmompelriera@nlcsjeju.kr)**
+Built for his Year 10 and 11 IGCSE Biology classes.
+Questions, corrections, or if you would like to use it with your own students:
 
-© Dr Daniel Mompel Riera. The anatomical source material is licensed as set out above; the
-site itself — its design, its writing and its questions — is his work.
+[![Email](https://img.shields.io/badge/dmompelriera@nlcsjeju.kr-3D7A54?style=for-the-badge&logo=gmail&logoColor=white)](mailto:dmompelriera@nlcsjeju.kr)
+
+<sub>© Dr Daniel Mompel Riera. The anatomical source material is licensed as set out above;
+the site itself — its design, its writing and its questions — is his work.</sub>
+
+</div>
