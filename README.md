@@ -132,6 +132,7 @@ run `setup`, deploy. Five minutes, once, for all nine labs.
 | **Labs** | a row per lab: its id, its tab, **Mastery open** ☑, the message shown when it is closed, and a live count of hand-ins |
 | **Students** | the dashboard: every student, their class, and their best score in **every lab** — the nine columns are there from the start, empty until that lab is used |
 | **Digestion**, **Circulation**, … | a tab per lab: every hand-in, newest at the bottom |
+| **Rejected** | anything that did not add up — a wrong code, an impossible score — kept out of the real tabs, with the reason |
 
 Every tab is styled by the script, not by hand: a frozen dark-green header, columns wide
 enough for what is in them, long text wrapped rather than clipped, the name column frozen
@@ -154,7 +155,8 @@ the hand-ins use the same class codes.
 6. **Run ▸ `setup`.** Authorise when asked — your own script, your own Sheet. It builds and
    styles every tab.
 7. **Deploy ▸ New deployment ▸ Web app**, *Execute as* **Me**, *Who has access* **Anyone**.
-   Deploy, copy the `/exec` URL.
+   Deploy, copy the `/exec` URL. *(“Anyone” sounds alarming — see below for what it does and
+   does not open up. It is the only setting that works, and it does not share your Sheet.)*
 8. **Paste that URL** into each lab's `js/config.js` as `submitUrl`, commit, push.
 
 > **After any edit to the script:** Deploy ▸ Manage deployments ▸ pencil ▸ *Version: New
@@ -215,8 +217,38 @@ pushGradesFor('digestion-lab', 'YOUR_COURSE_ID', 'THE_COURSEWORK_ID')  // after 
 `pushGradesFor` takes each student's best score from that lab's tab and matches on name
 against the class list. A name it cannot match is left alone and listed in the log.
 
-**Honest limits.** The Mastery switch is a classroom control, not security: the labs are
-static sites and a determined student can work around anything the browser is told. If the
+### “Who has access: Anyone” — what that really means
+
+It has to be *Anyone*, because the labs are ordinary web pages with no login: the student's
+browser posts to the script as a stranger. *Anyone with a Google Account* makes the browser
+follow a sign-in redirect instead, and the hand-in never arrives.
+
+What it does **not** do is share your spreadsheet. Nobody gets access to the Sheet, to
+Classroom, or to your Drive. The URL exposes exactly two things:
+
+* a **GET** that answers one question — is Mastery open? — and nothing else;
+* a **POST** that can add one row to a lab tab.
+
+So the worst somebody can do with the URL is put rubbish rows in a sheet you own, which you
+can delete. They cannot read a single mark.
+
+Three things keep that in check:
+
+* **Anything that does not add up is quarantined.** A wrong completion code, a score above
+  the total, an impossible total, a missing name — the row goes to a **Rejected** tab with
+  the reason, never into a lab's tab. The lab tabs stay trustworthy.
+* **A shared word, if you want one.** Set `SUBMIT_TOKEN` at the top of `Code.gs` and the same
+  word as `submitToken` in each lab's `js/config.js`. Posts without it are refused. Be
+  straight about what this buys: `config.js` ships with the site, so a student who reads the
+  source can find the word. It stops someone who merely has the URL, not someone determined.
+* **A forged row usually looks forged.** The metadata gives it away — 113/113 in 113 checks,
+  0 right first time, "0 min" since starting. Sort by *Checks* and the odd one stands out.
+
+If you would rather not run any of it, leave `submitUrl` empty: students get their completion
+code on screen to paste into Classroom, and nothing is posted anywhere.
+
+**The other honest limits.** The Mastery switch is a classroom control, not security: the labs
+are static sites and a determined student can work around anything the browser is told. If the
 Sheet cannot be reached, a lab keeps the last answer it had. And the only way to make a test
 genuinely un-grindable is different questions in the test.
 
@@ -276,7 +308,13 @@ var LABS = [
   { id:'reproduction-lab',  name:'Reproduction',     topic:'16 · Reproduction',         questions:0 }
 ];
 
-var T_SETUP = 'Setup', T_LABS = 'Labs', T_STUDENTS = 'Students';
+var T_SETUP = 'Setup', T_LABS = 'Labs', T_STUDENTS = 'Students', T_REJECTED = 'Rejected';
+
+/* Optional. Leave '' and anyone who finds the URL can post a row. Set a word here AND the
+   same word as `submitToken` in each lab's js/config.js, and a post without it is refused.
+   The labs are public sites, so the word is readable by anyone who looks at config.js — it
+   stops drive-by posting to a URL somebody stumbled on, not a student who reads the source. */
+var SUBMIT_TOKEN = '';
 
 /* House colours, so the Sheet looks like the labs it collects. */
 var INK = '#14572B', INK_SOFT = '#E4EFE7', LINE = '#C9D8CD', WARN = '#B8860B', BAD = '#B03A2E';
@@ -307,6 +345,7 @@ function doPost(e) {
     var d = JSON.parse(e.postData.contents);
     var lab = _labById(String(d.app || ''));
     if (!lab) return _text('unknown lab: ' + d.app);
+    if (SUBMIT_TOKEN && String(d.token || '') !== SUBMIT_TOKEN) return _text('refused');
 
     var name  = String(d.name || '').trim().slice(0, 80);
     var form  = String(d.form || '').trim().slice(0, 20);
@@ -316,9 +355,22 @@ function doPost(e) {
 
     var genuine = (_code(lab.id, name, form, score + '/' + total) === String(d.code || ''));
     var flags = [];
-    if (!genuine) flags.push('CODE MISMATCH');
     if (lab.questions && total !== lab.questions) flags.push('NOT ALL QUESTIONS');
     if (d.complete === false) flags.push('PROGRESS — not finished');
+
+    /* Anything that does not add up is kept, but not among the real work: a wrong
+       completion code, a score above the total, or numbers outside what the lab can
+       produce goes to the Rejected tab where you can look at it and delete it. */
+    var wrong = [];
+    if (!genuine) wrong.push('code does not match');
+    if (score > total) wrong.push('score above the total');
+    if (total < 0 || total > 1000) wrong.push('impossible total');
+    if (name.length < 2) wrong.push('no name');
+    if (wrong.length) {
+      _reject(lab, [new Date(), lab.id, name, form, mode, score, total, d.code || '',
+                    wrong.join('; '), JSON.stringify(d).slice(0, 2000)]);
+      return _text('rejected: ' + wrong.join('; '));
+    }
 
     var sh = _labSheet(lab);
     sh.appendRow([
@@ -326,7 +378,7 @@ function doPost(e) {
       score, total, total ? score / total : 0,
       d.complete === false ? 'progress' : 'complete',
       Number(d.checks) || '', Number(d.firstTime) || '', _since(d.from),
-      d.code || '', genuine ? 'ok' : 'CHECK', flags.join('; '),
+      d.code || '', 'ok', flags.join('; '),
       _stations(d.stations)
     ]);
     _tidyLastRow(sh);
@@ -334,6 +386,20 @@ function doPost(e) {
   } catch (err) {
     return _text('error: ' + err);
   }
+}
+
+/* Junk, and anything that does not verify, lands here instead of in a lab's tab. */
+function _reject(lab, row) {
+  var ss = _ss(), sh = ss.getSheetByName(T_REJECTED);
+  if (!sh) {
+    sh = ss.insertSheet(T_REJECTED);
+    sh.getRange(1, 1, 1, 10).setValues([['When', 'Lab', 'Name', 'Class', 'Mode', 'Score',
+                                         'Out of', 'Code', 'Why it was refused', 'What was sent']]);
+    _dress(sh, ['When', 'Lab', 'Name', 'Class', 'Mode', 'Score', 'Out of', 'Code',
+                'Why it was refused', 'What was sent'],
+           [140, 130, 180, 70, 90, 70, 70, 120, 220, 460], { wrapCols: [9, 10] });
+  }
+  sh.appendRow(row);
 }
 
 /* ============================================================
@@ -351,8 +417,7 @@ function doGet(e) {
     if (q.callback) return _js(q.callback + '(' + body + ');');
     return _json(body);
   }
-  return _text('Biology Labs endpoint is running. Labs: ' +
-               LABS.map(function (l) { return l.id; }).join(', '));
+  return _text('Biology Labs endpoint is running.');
 }
 
 function closeMasteryAll() { _setMasteryAll(false); }

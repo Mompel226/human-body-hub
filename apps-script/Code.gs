@@ -48,7 +48,13 @@ var LABS = [
   { id:'reproduction-lab',  name:'Reproduction',     topic:'16 · Reproduction',         questions:0 }
 ];
 
-var T_SETUP = 'Setup', T_LABS = 'Labs', T_STUDENTS = 'Students';
+var T_SETUP = 'Setup', T_LABS = 'Labs', T_STUDENTS = 'Students', T_REJECTED = 'Rejected';
+
+/* Optional. Leave '' and anyone who finds the URL can post a row. Set a word here AND the
+   same word as `submitToken` in each lab's js/config.js, and a post without it is refused.
+   The labs are public sites, so the word is readable by anyone who looks at config.js — it
+   stops drive-by posting to a URL somebody stumbled on, not a student who reads the source. */
+var SUBMIT_TOKEN = '';
 
 /* House colours, so the Sheet looks like the labs it collects. */
 var INK = '#14572B', INK_SOFT = '#E4EFE7', LINE = '#C9D8CD', WARN = '#B8860B', BAD = '#B03A2E';
@@ -79,6 +85,7 @@ function doPost(e) {
     var d = JSON.parse(e.postData.contents);
     var lab = _labById(String(d.app || ''));
     if (!lab) return _text('unknown lab: ' + d.app);
+    if (SUBMIT_TOKEN && String(d.token || '') !== SUBMIT_TOKEN) return _text('refused');
 
     var name  = String(d.name || '').trim().slice(0, 80);
     var form  = String(d.form || '').trim().slice(0, 20);
@@ -88,9 +95,22 @@ function doPost(e) {
 
     var genuine = (_code(lab.id, name, form, score + '/' + total) === String(d.code || ''));
     var flags = [];
-    if (!genuine) flags.push('CODE MISMATCH');
     if (lab.questions && total !== lab.questions) flags.push('NOT ALL QUESTIONS');
     if (d.complete === false) flags.push('PROGRESS — not finished');
+
+    /* Anything that does not add up is kept, but not among the real work: a wrong
+       completion code, a score above the total, or numbers outside what the lab can
+       produce goes to the Rejected tab where you can look at it and delete it. */
+    var wrong = [];
+    if (!genuine) wrong.push('code does not match');
+    if (score > total) wrong.push('score above the total');
+    if (total < 0 || total > 1000) wrong.push('impossible total');
+    if (name.length < 2) wrong.push('no name');
+    if (wrong.length) {
+      _reject(lab, [new Date(), lab.id, name, form, mode, score, total, d.code || '',
+                    wrong.join('; '), JSON.stringify(d).slice(0, 2000)]);
+      return _text('rejected: ' + wrong.join('; '));
+    }
 
     var sh = _labSheet(lab);
     sh.appendRow([
@@ -98,7 +118,7 @@ function doPost(e) {
       score, total, total ? score / total : 0,
       d.complete === false ? 'progress' : 'complete',
       Number(d.checks) || '', Number(d.firstTime) || '', _since(d.from),
-      d.code || '', genuine ? 'ok' : 'CHECK', flags.join('; '),
+      d.code || '', 'ok', flags.join('; '),
       _stations(d.stations)
     ]);
     _tidyLastRow(sh);
@@ -106,6 +126,20 @@ function doPost(e) {
   } catch (err) {
     return _text('error: ' + err);
   }
+}
+
+/* Junk, and anything that does not verify, lands here instead of in a lab's tab. */
+function _reject(lab, row) {
+  var ss = _ss(), sh = ss.getSheetByName(T_REJECTED);
+  if (!sh) {
+    sh = ss.insertSheet(T_REJECTED);
+    sh.getRange(1, 1, 1, 10).setValues([['When', 'Lab', 'Name', 'Class', 'Mode', 'Score',
+                                         'Out of', 'Code', 'Why it was refused', 'What was sent']]);
+    _dress(sh, ['When', 'Lab', 'Name', 'Class', 'Mode', 'Score', 'Out of', 'Code',
+                'Why it was refused', 'What was sent'],
+           [140, 130, 180, 70, 90, 70, 70, 120, 220, 460], { wrapCols: [9, 10] });
+  }
+  sh.appendRow(row);
 }
 
 /* ============================================================
@@ -123,8 +157,7 @@ function doGet(e) {
     if (q.callback) return _js(q.callback + '(' + body + ');');
     return _json(body);
   }
-  return _text('Biology Labs endpoint is running. Labs: ' +
-               LABS.map(function (l) { return l.id; }).join(', '));
+  return _text('Biology Labs endpoint is running.');
 }
 
 function closeMasteryAll() { _setMasteryAll(false); }
