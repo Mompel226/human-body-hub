@@ -498,8 +498,13 @@ function _dress(sh, headers, widths, opts) {
 
 function _styleSetup() {
   var sh = _sheet(T_SETUP);
+  /* Read what is already there before clearing: B7 is the one cell the teacher is
+     told to fill in, and re-applying the formatting must not wipe it. */
+  var url = '';
+  try { url = String(sh.getRange('B7').getValue() || '').trim(); } catch (e) {}
+  if (!/^https?:/i.test(url)) url = PropertiesService.getScriptProperties().getProperty('WEB_APP_URL') || '';
+  if (!url) url = '(paste your /exec URL here, so you can find it again)';
   sh.clear();
-  var url = PropertiesService.getScriptProperties().getProperty('WEB_APP_URL') || '(paste your /exec URL in B7)';
   var lines = [
     ['Biology Labs — one spreadsheet for every lab', ''],
     ['', ''],
