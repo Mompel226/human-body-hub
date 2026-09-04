@@ -43,12 +43,12 @@ ORGANS = [
 
   # ---- T9 transport in animals -----------------------------------------
   ('heart',       'Heart',             'circulation', ['FMA7274','FMA7234','FMA7235','FMA7246'], 16000),
-  ('aorta',       'Aorta',             'circulation', ['FMA3736','FMA3768','FMA3784'], 6000),
-  ('venacava',    'Venae cavae',       'circulation', ['FMA4720','FMA10951'], 4000),
-  ('pulmvessels', 'Pulmonary vessels', 'circulation', ['FMA66326','FMA66643'], 9000),
+  ('aorta',       'Aorta',             'circulation', ['FMA3736','FMA3768','FMA3784'], 30000),
+  ('venacava',    'Venae cavae',       'circulation', ['FMA4720','FMA10951'], 10000),
+  ('pulmvessels', 'Pulmonary vessels', 'circulation', ['FMA66326','FMA66643'], 24000),
   ('bigarteries', 'Major arteries',    'circulation', ['FMA3941','FMA4058','FMA3953','FMA4694',
                                                        'FMA14765','FMA14766','FMA18806','FMA18807',
-                                                       'FMA18809','FMA18810'], 5000),
+                                                       'FMA18809','FMA18810'], 16000),
   # the rest of the vascular tree — thin tubes, so they get a generous budget
   ('vessels',     'Blood vessels',     'circulation',
      ['FMA3802','FMA3818','FMA76994','FMA3895','FMA4685','FMA71669','FMA71670',   # coronary arteries
@@ -57,7 +57,7 @@ ORGANS = [
       'FMA50737','FMA14771','FMA14768','FMA14773','FMA14749','FMA14750',           # gut and liver arteries
       'FMA14331','FMA14332',                                                       # splenic, mesenteric veins
       'FMA21387','FMA21388','FMA18885','FMA18886','FMA18887','FMA18888'],          # iliac veins
-     22000),
+     62000),
 
   # ---- T10 diseases and immunity ---------------------------------------
   ('spleen',      'Spleen',            'immunity',   ['FMA7196'], 5000),

@@ -29,7 +29,8 @@ const LANDMARK = {
 /* Topic 15 has no organ of its own — drugs travel in the blood */
 const ALSO = { drugs:'circulation' };
 
-const REST = { skin:0.12, skeleton:0.34, organ:0.92 };
+const REST  = { skin:0.12, skeleton:0.34, organ:1 };
+const BLACK = 0x000000;
 
 const stage   = document.getElementById('stage');
 const said    = document.getElementById('said');
@@ -76,7 +77,7 @@ addEventListener('resize', resize);
 const bySystem = {};           // system -> [mesh]
 let skin = null, bones = [], organs = [], muscles = [];
 
-new GLTFLoader().load('assets/model/body.glb?v=3', gltf => {
+new GLTFLoader().load('assets/model/body.glb?v=4', gltf => {
   const model = gltf.scene;
 
   model.traverse(o => {
@@ -84,12 +85,18 @@ new GLTFLoader().load('assets/model/body.glb?v=3', gltf => {
     const [system, organ] = (o.name || '').split('__');
     o.userData.system = system; o.userData.organ = organ;
     const m = o.material;
-    m.transparent = true; m.depthWrite = true;
     m.roughness = 0.58; m.metalness = 0.0;
     m.emissive = new THREE.Color(0x000000);
-    o.userData.baseOpacity = system === 'context'
+    const ctx = system === 'context';
+    o.userData.baseOpacity = ctx
       ? (organ === 'skin' ? REST.skin : REST.skeleton) : REST.organ;
     m.opacity = o.userData.baseOpacity;
+    /* Only the layers meant to be see-through go in the transparent pass.
+       A transparent mesh that still writes depth hides whatever is behind it,
+       and the transparent pass is sorted by distance — so which parts of a
+       system you could see changed as the body turned. Organs are opaque. */
+    m.transparent = ctx;
+    m.depthWrite  = !ctx;
     if (organ === 'skin')      { skin = o;  m.depthWrite = false; m.side = THREE.FrontSide; }
     else if (organ === 'skeleton') bones.push(o);
     else {
@@ -138,9 +145,14 @@ function focusSystem(t) {
     /* a layer you switched off stays off — pointing at its lab must not
        bring it back, or it sits in front of the organs you wanted to reach */
     o.visible = o.userData.muscle ? muscleOn : true;
-    o.material.opacity  = on ? 1 : 0.05;
-    o.material.emissive.copy(on ? glow : new THREE.Color(0x000000));
-    o.material.emissiveIntensity = on ? 0.42 : 0;
+    const m = o.material;
+    m.transparent = !on;          /* the lit system is solid, so every part of
+                                     it shows from every angle */
+    m.opacity     = on ? 1 : 0.06;
+    m.depthWrite  = on;           /* a dimmed organ must never hide a lit one */
+    o.renderOrder = on ? 2 : 0;
+    m.emissive.copy(on ? glow : new THREE.Color(BLACK));
+    m.emissiveIntensity = on ? 0.42 : 0;
   });
   if (skin)  { skin.visible = skinOn; skin.material.opacity = 0.035; }
   bones.forEach(b => { b.visible = boneOn; b.material.opacity = 0.07; });
@@ -154,8 +166,12 @@ function clearSystem() {
   current = null;
   organs.forEach(o => {
     o.visible = o.userData.muscle ? muscleOn : true;
-    o.material.opacity = o.userData.baseOpacity;
-    o.material.emissive.setHex(0x000000); o.material.emissiveIntensity = 0;
+    const m = o.material;
+    m.transparent = false;
+    m.opacity     = o.userData.baseOpacity;
+    m.depthWrite  = true;
+    o.renderOrder = 0;
+    m.emissive.setHex(BLACK); m.emissiveIntensity = 0;
   });
   if (skin) { skin.visible = skinOn; skin.material.opacity = REST.skin; }
   bones.forEach(b => { b.visible = boneOn; b.material.opacity = REST.skeleton; });

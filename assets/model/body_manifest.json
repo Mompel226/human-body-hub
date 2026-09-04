@@ -95,35 +95,35 @@
   "organ": "aorta",
   "name": "Aorta",
   "meshes": 3,
-  "tris": 6000
+  "tris": 30000
  },
  {
   "system": "circulation",
   "organ": "venacava",
   "name": "Venae cavae",
   "meshes": 2,
-  "tris": 4000
+  "tris": 10000
  },
  {
   "system": "circulation",
   "organ": "pulmvessels",
   "name": "Pulmonary vessels",
   "meshes": 2,
-  "tris": 9000
+  "tris": 24000
  },
  {
   "system": "circulation",
   "organ": "bigarteries",
   "name": "Major arteries",
   "meshes": 10,
-  "tris": 5000
+  "tris": 16000
  },
  {
   "system": "circulation",
   "organ": "vessels",
   "name": "Blood vessels",
   "meshes": 32,
-  "tris": 22000
+  "tris": 62000
  },
  {
   "system": "immunity",

@@ -84,6 +84,13 @@ checked against the ontology rather than taken on trust.
 
 - It is a **male body** — no ovaries, uterus or oviducts. Topic 16 shows the male organs
   in 3D; the flat plate carries the female ones.
+- **The vessels stop at the trunk.** There is no femoral, brachial, popliteal,
+  axillary, radial, ulnar or tibial artery in the dataset — the segmentation
+  covered the trunk only. Circulation therefore runs from the jaw to the top of
+  the thigh and no further. The cut ends are capped so they read as stumps
+  rather than open pipes, but the limb vasculature cannot be conjured up.
+  There is no hepatic portal vein either, though the splenic and mesenteric
+  veins that feed it are present.
 - **Almost no nervous system.** This is the dataset's biggest gap. Searching all 937
   meshes turns up two optic nerves and the central canal of the spinal cord — and
   nothing else. No spinal cord, no peripheral nerves, no plexuses, no ganglia. The

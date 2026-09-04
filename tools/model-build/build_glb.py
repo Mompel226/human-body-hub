@@ -37,6 +37,11 @@ def load_group(ids):
     if not parts: return None
     return trimesh.util.concatenate(parts)
 
+# BodyParts3D vessels are open-ended tubes: where the segmentation stopped you
+# see straight down the hollow pipe, which reads as a severed vessel. Capping
+# the openings makes them end as solid stumps instead.
+CAP_ENDS = {'vessels','aorta','venacava','bigarteries','pulmvessels'}
+
 def decimate(m, target):
     m.merge_vertices()
     if len(m.faces) <= target: return m
@@ -54,6 +59,11 @@ for oid, name, system, ids, target in manifest.ORGANS:
     if m is None:
         print('SKIP %s (no meshes)'%oid); continue
     before=len(m.faces)
+    if oid in CAP_ENDS:
+        try:
+            m.fill_holes()
+        except Exception as e:
+            print('   (could not cap %s: %s)' % (oid, e))
     m = decimate(m, target)
     m.merge_vertices(); m.fix_normals()
     c = COLOUR.get(oid,(200,200,200,255))
