@@ -14,10 +14,9 @@
  *
  * SET UP  (five minutes, once, for all nine labs)
  *   1. Make one new Google Sheet. The name does not matter.
- *   2. Copy its ID from the address bar:
- *        docs.google.com/spreadsheets/d/ >>>THIS BIT<<< /edit
- *      and paste it into SHEET_ID below.
- *   3. Extensions ▸ Apps Script. Delete what is there, paste this file in.
+ *   2. From that Sheet: Extensions ▸ Apps Script. Delete what is there, paste this file in.
+ *      You do NOT need to paste any id: the script is inside the Sheet, so it works out
+ *      which one it is the first time you run it, and remembers.
  *      Then + (next to Files) ▸ HTML ▸ name it exactly  ClassroomImport
  *      and paste apps-script/ClassroomImport.html into it. Save.
  *   4. Services (+) ▸ Classroom ▸ Add.        (needed for the roster import)
@@ -357,32 +356,38 @@ function pushGradesFor(labId, courseId, courseWorkId) {
 
 /* Tells you, in one box, which of the five set-up steps are done. */
 function checkSetup() {
-  var lines = [];
-  var idOk = SHEET_ID && SHEET_ID !== 'PASTE_YOUR_SHEET_ID_HERE';
-  lines.push((idOk ? '✅' : '❌') + '  SHEET_ID ' + (idOk ? 'is set' : 'is still the placeholder — paste your Sheet ID at the top of Code.gs'));
+  var lines = [], id = '', src = '';
+  try {
+    id = _sheetId();
+    src = (SHEET_ID && SHEET_ID !== 'PASTE_YOUR_SHEET_ID_HERE') ? 'from SHEET_ID at the top of Code.gs'
+        : 'worked out from this Sheet and remembered — you do not need to paste it';
+    lines.push('✅  spreadsheet: ' + src);
+  } catch (e) {
+    lines.push('❌  ' + e.message);
+  }
 
-  var openOk = false;
-  if (idOk) {
-    try { SpreadsheetApp.openById(SHEET_ID).getName(); openOk = true; } catch (e) {}
-    lines.push((openOk ? '✅' : '❌') + '  the Sheet ' + (openOk ? 'opens' : 'will not open — check the ID is the long code from the address bar'));
+  var openOk = false, name = '';
+  if (id) {
+    try { name = SpreadsheetApp.openById(id).getName(); openOk = true; } catch (e) {}
+    lines.push((openOk ? '✅' : '❌') + '  ' + (openOk ? 'it opens: “' + name + '”' : 'that id will not open'));
   }
 
   var clsOk = (typeof Classroom !== 'undefined' && Classroom && Classroom.Courses);
   lines.push((clsOk ? '✅' : '❌') + '  Google Classroom ' + (clsOk ? 'is switched on' :
     'is NOT switched on — left sidebar: Services ▸ + ▸ Google Classroom API ▸ Add (identifier "Classroom")'));
-
-  var n = 0;
   if (clsOk) {
-    try { n = (Classroom.Courses.list({ courseStates: ['ACTIVE'], pageSize: 5 }).courses || []).length; lines.push('✅  it can see your courses (' + n + '+ active)'); }
-    catch (e) { lines.push('❌  Classroom is on but not authorised yet — Run ▸ setup once and accept the permission. (' + e + ')'); }
+    try { var n = (Classroom.Courses.list({ courseStates: ['ACTIVE'], pageSize: 5 }).courses || []).length;
+          lines.push('✅  it can see your courses (' + n + '+ active)'); }
+    catch (e) { lines.push('❌  Classroom is on but not authorised — Run ▸ setup once and accept. (' + e + ')'); }
   }
 
   if (openOk) {
-    var have = Math.max(0, _sheet(T_STUDENTS).getLastRow() - 1);
-    lines.push('•  students imported so far: ' + have);
-    var built = LABS.filter(function (l) { return SpreadsheetApp.openById(SHEET_ID).getSheetByName(l.name); }).length;
-    lines.push('•  lab tabs built: ' + built + ' of ' + LABS.length);
+    lines.push('•  students imported: ' + Math.max(0, _sheet(T_STUDENTS).getLastRow() - 1));
+    var built = LABS.filter(function (l) { return _ss().getSheetByName(l.name); }).length;
+    lines.push('•  lab tabs so far: ' + built + ' of ' + LABS.length);
   }
+  lines.push('');
+  lines.push('Remember: editing this script changes nothing until Deploy ▸ Manage deployments ▸ pencil ▸ New version ▸ Deploy.');
 
   SpreadsheetApp.getUi().alert('Biology Labs — set-up', lines.join('\n\n'), SpreadsheetApp.getUi().ButtonSet.OK);
 }
@@ -393,8 +398,8 @@ function checkSetup() {
 function setup() {
   _sheet(T_SETUP); _sheet(T_LABS); _sheet(T_STUDENTS);
   LABS.forEach(function (l) { if (l.questions) _labSheet(l); });   /* built labs get a tab now */
-  var old = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Summary');
-  if (old && old.getLastRow() < 2) SpreadsheetApp.openById(SHEET_ID).deleteSheet(old);  /* the Students tab is the summary now */
+  var old = _ss().getSheetByName('Summary');
+  if (old && old.getLastRow() < 2) _ss().deleteSheet(old);  /* the Students tab is the summary now */
   _installButtons();
   restyleAll();
   refreshDashboard();
@@ -404,7 +409,7 @@ function setup() {
 function restyleAll() {
   _styleSetup(); _styleLabs(); _styleStudents();
   LABS.forEach(function (l) {
-    var sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName(l.name);
+    var sh = _ss().getSheetByName(l.name);
     if (sh) _styleLab(sh);
   });
 }
@@ -516,7 +521,7 @@ function _installButtons() {
   });
   if (have) return;
   ScriptApp.newTrigger('onButtonTicked')
-    .forSpreadsheet(SpreadsheetApp.openById(SHEET_ID)).onEdit().create();
+    .forSpreadsheet(_ss()).onEdit().create();
 }
 
 function onButtonTicked(e) {
@@ -565,7 +570,7 @@ function _styleStudents() {
 
   /* a lab that is not built yet still gets its column, greyed so it reads as "not yet" */
   LABS.forEach(function (l, i) {
-    var built = !!SpreadsheetApp.openById(SHEET_ID).getSheetByName(l.name);
+    var built = !!_ss().getSheetByName(l.name);
     sh.getRange(1, first + i).setFontColor(built ? '#FFFFFF' : '#9DB3A4')
       .setFontStyle(built ? 'normal' : 'italic')
       .setNote(l.topic + (built ? '' : '\n\nThis lab is not built yet.'));
@@ -594,7 +599,7 @@ function _styleStudents() {
    than formulas so the sheet stays fast and never shows #REF for a lab that does not
    exist yet — the column is simply empty until that lab hands in. */
 function refreshDashboard() {
-  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var ss = _ss();
   var sh = _sheet(T_STUDENTS);
   var rows = Math.max(0, sh.getLastRow() - 1);
   if (!rows) { SpreadsheetApp.getActive().toast('No students yet — import a class first.', 'Biology Labs', 5); return; }
@@ -686,7 +691,23 @@ function _tidyLastRow(sh) {
 /* ============================================================
    6. Plumbing
    ============================================================ */
-function _ss() { return SpreadsheetApp.openById(SHEET_ID); }
+/* Which spreadsheet this is.
+   If the script lives inside the Sheet (Extensions ▸ Apps Script), it works this out on
+   its own the first time you run anything from the Sheet, and remembers it — so pasting a
+   fresh copy of this file never breaks the deployment. SHEET_ID is only needed for a
+   stand-alone script, or to point it at a different Sheet. */
+function _sheetId() {
+  if (SHEET_ID && SHEET_ID !== 'PASTE_YOUR_SHEET_ID_HERE') return SHEET_ID;
+  var props = PropertiesService.getScriptProperties();
+  var kept = props.getProperty('SHEET_ID');
+  if (kept) return kept;
+  var active = SpreadsheetApp.getActiveSpreadsheet();      /* null in a web app; set from the Sheet */
+  if (active) { props.setProperty('SHEET_ID', active.getId()); return active.getId(); }
+  throw new Error('This script does not know which spreadsheet to use. Open the Sheet and run ' +
+                  '🧪 Biology Labs ▸ Check the set-up once — that remembers it — then Deploy ▸ ' +
+                  'Manage deployments ▸ pencil ▸ New version ▸ Deploy.');
+}
+function _ss() { return SpreadsheetApp.openById(_sheetId()); }
 function _sheet(name) {
   var ss = _ss(), sh = ss.getSheetByName(name);
   if (sh) return sh;
