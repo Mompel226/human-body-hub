@@ -103,13 +103,26 @@ tools/inline-plate.py     re-inlines body.svg into index.html
 apps-script/Code.gs             the marks spreadsheet: one script for every lab
 apps-script/ClassroomImport.html  the import window it opens
 tools/gastest.js          runs Code.gs against a stand-in for Google Sheets
+tools/sync-readme.mjs     copies apps-script/ into the README's paste blocks
 README.md                 the front page, and the copy-paste setup for the sheet
 docs/link-back.md         the one line that points a lab back here
 ```
 
 The spreadsheet lives here rather than in any one lab because it collects **all**
-of them — see *The marks spreadsheet* in `README.md`. Change `apps-script/Code.gs`
-and the copy inlined in the README has to change with it.
+of them — see *The marks spreadsheet* in `README.md`.
+
+### After changing anything in `apps-script/`
+
+```
+node tools/gastest.js apps-script/Code.gs   # does it still work
+node tools/sync-readme.mjs                  # put it in the README
+```
+
+The README is how the spreadsheet gets installed — you copy those two blocks into
+the Apps Script editor — so a block that has drifted from the file installs a
+script nothing has ever run. `sync-readme.mjs` finds each block by the `<summary>`
+line above it, never by line number; `--check` changes nothing and exits non-zero
+if they differ.
 
 ### The harness
 
