@@ -7,6 +7,8 @@
 Nine topics live inside one body. Point at a lab and its organs light up where they
 really sit; open the lab and work through the topic with questions that mark themselves.
 
+by **Dr Daniel Mompel Riera** · NLCS Jeju
+
 [**→ Open the site**](https://mompel226.github.io/IGCSE-revision-app/) &nbsp;·&nbsp;
 [Light version](https://mompel226.github.io/IGCSE-revision-app/plate.html) &nbsp;·&nbsp;
 [Digestion Lab](https://mompel226.github.io/digestion-lab/)
@@ -140,4 +142,15 @@ python3 -m http.server 8744
 > BodyParts3D, so publishing it licenses that file onward under CC BY-SA 2.1 Japan. The
 > credit line in the page footer is part of that obligation — please keep it.
 
-Built for Year 10 and 11 IGCSE Biology at NLCS Jeju.
+---
+
+## Who made this
+
+**Dr Daniel Mompel Riera** — Biology, North London Collegiate School Jeju.
+
+Built for his Year 10 and 11 IGCSE Biology classes. Questions, corrections, or if
+you'd like to use it with your own students, please get in touch:
+**[dmompelriera@nlcsjeju.kr](mailto:dmompelriera@nlcsjeju.kr)**
+
+© Dr Daniel Mompel Riera. The anatomical source material is licensed as set out
+above; the site itself — its design, its writing and its questions — is his work.

@@ -4,13 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Biology Labs — the human body, IGCSE 0610</title>
+<meta name="author" content="Dr Daniel Mompel Riera">
+<meta name="copyright" content="Dr Daniel Mompel Riera, NLCS Jeju">
 <meta name="theme-color" content="#0A141C">
 <meta name="description" content="Revision labs for Cambridge IGCSE Biology 0610, on a human body reconstructed from MRI. Pick a system and work through it.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🫀</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/hub.css?v=23">
+<link rel="stylesheet" href="css/hub.css?v=25">
 <style>
   /* the 3D stage replaces the flat plate, everything else is the hub's */
   #stage{position:absolute;inset:0;z-index:1}
@@ -22,16 +24,22 @@
     color:var(--chalk-dim);transition:opacity .5s
   }
   .loading.done{opacity:0;pointer-events:none}
+  /* the hint sits over the model, so it carries its own backing —
+     otherwise it vanishes against a pale organ when you zoom in */
   .hint{
-    position:absolute;left:50%;bottom:6px;transform:translateX(-50%);z-index:3;
-    font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
-    color:#7C93A3;white-space:nowrap
+    position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:6;
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:#CBDCE6;white-space:nowrap;pointer-events:none;
+    background:rgba(7,15,21,.72);border:1px solid rgba(150,190,215,.2);
+    border-radius:999px;padding:6px 14px;
+    -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)
   }
-  .toggles{position:absolute;top:16px;right:22px;z-index:3;display:flex;gap:6px}
+  .toggles{position:absolute;top:16px;right:22px;z-index:6;display:flex;gap:6px}
   .tg{
     font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
     color:#A9BECB;border:1px solid rgba(150,190,215,.3);border-radius:2px;padding:5px 9px;
-    background:rgba(10,20,28,.5);transition:.18s
+    background:rgba(7,15,21,.72);transition:.18s;
+    -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)
   }
   .tg[aria-pressed="true"]{background:rgba(120,200,230,.18);color:#DCEAF2;border-color:rgba(150,215,240,.55)}
 </style>
@@ -54,6 +62,7 @@
       <span class="hint">Drag to turn · scroll to zoom</span>
     </div>
 
+      <span class="wm" aria-hidden="true">Dr Daniel Mompel Riera</span>
     <p class="said" id="said"></p>
   </section>
 
@@ -73,6 +82,7 @@
     <div class="band"><span class="eyebrow">Being built</span><span class="count" id="count"></span></div>
     <ol class="queue" id="queue"></ol>
 
+    <p class="byline">Made by <strong>Dr Daniel Mompel Riera</strong> · NLCS Jeju · <a href="mailto:dmompelriera@nlcsjeju.kr">dmompelriera@nlcsjeju.kr</a></p>
     <p class="colophon">
       Syllabus for 2026–2028 · Body reconstructed from
       <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html" target="_blank" rel="noopener">BodyParts3D</a>,
