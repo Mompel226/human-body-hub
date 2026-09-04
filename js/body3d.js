@@ -20,7 +20,7 @@ const GLOW = {
 };
 /* what the caption calls each system's landmark */
 const LANDMARK = {
-  digestion:'Stomach, liver and gut', circulation:'Heart and great vessels',
+  digestion:'Stomach, liver and gut', circulation:'Heart, arteries and veins',
   immunity:'Spleen and thymus',       'gas-exchange':'Lungs, airways and breathing muscles',
   respiration:'Skeletal muscle, head to foot', excretion:'Kidneys and bladder',
   coordination:'Brain and eyes',      reproduction:'Reproductive organs',
@@ -74,9 +74,9 @@ addEventListener('resize', resize);
 
 /* ---------------- the body ---------------- */
 const bySystem = {};           // system -> [mesh]
-let skin = null, bones = [], organs = [];
+let skin = null, bones = [], organs = [], muscles = [];
 
-new GLTFLoader().load('assets/model/body.glb?v=2', gltf => {
+new GLTFLoader().load('assets/model/body.glb?v=3', gltf => {
   const model = gltf.scene;
 
   model.traverse(o => {
@@ -92,7 +92,14 @@ new GLTFLoader().load('assets/model/body.glb?v=2', gltf => {
     m.opacity = o.userData.baseOpacity;
     if (organ === 'skin')      { skin = o;  m.depthWrite = false; m.side = THREE.FrontSide; }
     else if (organ === 'skeleton') bones.push(o);
-    else { organs.push(o); (bySystem[system] = bySystem[system] || []).push(o); }
+    else {
+      organs.push(o);
+      (bySystem[system] = bySystem[system] || []).push(o);
+      /* muscle can be pulled off to see the organs underneath */
+      if (organ.startsWith('muscle-') || organ === 'intercostals') {
+        o.userData.muscle = true; muscles.push(o);
+      }
+    }
   });
 
   /* BodyParts3D is Z-up and in millimetres; stand it up, scale to metres,
@@ -128,6 +135,7 @@ function focusSystem(t) {
 
   organs.forEach(o => {
     const on = wanted.has(o.userData.system);
+    o.visible = on ? true : (o.userData.muscle ? muscleOn : true);
     o.material.opacity  = on ? 1 : 0.05;
     o.material.emissive.copy(on ? glow : new THREE.Color(0x000000));
     o.material.emissiveIntensity = on ? 0.42 : 0;
@@ -143,6 +151,7 @@ function focusSystem(t) {
 function clearSystem() {
   current = null;
   organs.forEach(o => {
+    o.visible = o.userData.muscle ? muscleOn : true;
     o.material.opacity = o.userData.baseOpacity;
     o.material.emissive.setHex(0x000000); o.material.emissiveIntensity = 0;
   });
@@ -194,9 +203,10 @@ function wire(el, t) {
 }
 
 /* ---------------- toggles ---------------- */
-let skinOn = true, boneOn = true;
+let skinOn = true, boneOn = true, muscleOn = true;
 const tgSkin = document.getElementById('tgSkin'),
       tgBone = document.getElementById('tgBone'),
+      tgMus  = document.getElementById('tgMus'),
       tgSpin = document.getElementById('tgSpin');
 
 tgSkin.addEventListener('click', () => {
@@ -206,6 +216,14 @@ tgSkin.addEventListener('click', () => {
 tgBone.addEventListener('click', () => {
   boneOn = !boneOn; tgBone.setAttribute('aria-pressed', boneOn);
   bones.forEach(b => { b.visible = boneOn; });
+});
+tgMus.addEventListener('click', () => {
+  muscleOn = !muscleOn; tgMus.setAttribute('aria-pressed', muscleOn);
+  /* The button is the last word. Without this, a system lit by the idle tour
+     kept its own muscle on screen and the toggle looked broken. Pointing at
+     Respiration still reveals the muscle — focusSystem sees to that. */
+  if (!muscleOn) clearSystem();
+  muscles.forEach(m => { m.visible = muscleOn; });
 });
 tgSpin.addEventListener('click', () => {
   controls.autoRotate = !controls.autoRotate;

@@ -20,7 +20,7 @@ by **Dr Daniel Mompel Riera** · NLCS Jeju
 ![The hub: a body reconstructed from MRI, with the gas exchange system lit](docs/img/hub-3d.png)
 
 The front door is a **human body reconstructed from MRI**. Drag it to turn it, scroll to
-zoom, toggle the skin and skeleton away. Point at a lab on the right and that system
+zoom, and switch the skin, skeleton or muscle off to see what lies underneath. Point at a lab on the right and that system
 lights up in the body; point at an organ and its lab lights up in the list. Left alone,
 it walks through the nine systems by itself.
 
@@ -43,10 +43,10 @@ The two pages link to each other, so nobody gets stuck on the heavy one.
 | # | Topic | Lab | Lights up |
 |---|-------|-----|-----------|
 | 7 | Human nutrition | **Digestion Lab** — [live](https://mompel226.github.io/digestion-lab/) | stomach, liver, gall bladder, pancreas, the whole gut |
-| 9 | Transport in animals | Circulation Lab | heart, aorta, venae cavae, pulmonary and iliac vessels |
+| 9 | Transport in animals | Circulation Lab | heart and valves, the coronary vessels, aorta, venae cavae, pulmonary vessels, carotids, jugulars, subclavians, the gut and liver arteries, and the iliac tree into the legs |
 | 10 | Diseases and immunity | Immunity Lab | spleen, thymus |
-| 11 | Gas exchange in humans | Gas Exchange Lab | trachea, bronchi, all five lung lobes, diaphragm |
-| 12 | Respiration | Respiration Lab | thigh and calf muscle — where it actually happens |
+| 11 | Gas exchange in humans | Gas Exchange Lab | trachea, bronchi, all five lung lobes, diaphragm, intercostal muscles |
+| 12 | Respiration | Respiration Lab | skeletal muscle head to foot — where a student can feel it |
 | 13 | Excretion in humans | Excretion Lab | kidneys, ureters, bladder, renal vessels |
 | 14 | Coordination and response | Coordination Lab | brain, eyes, optic nerves, pituitary, adrenals |
 | 15 | Drugs | Drugs & AMR Lab | the bloodstream that carries them |
@@ -82,8 +82,12 @@ checked against the ontology rather than taken on trust.
 
 - It is a **male body** — no ovaries, uterus or oviducts. Topic 16 shows the male organs
   in 3D; the flat plate carries the female ones.
-- **No spinal cord** — only its central canal, which would mislead if labelled as the cord,
-  so it is left out.
+- **Almost no nervous system.** This is the dataset's biggest gap. Searching all 937
+  meshes turns up two optic nerves and the central canal of the spinal cord — and
+  nothing else. No spinal cord, no peripheral nerves, no plexuses, no ganglia. The
+  canal is left out rather than labelled as the cord, which would mislead. Topic 14
+  therefore shows brain, eyes, optic nerves, pituitary and adrenal glands. Nerves
+  would have to come from a different source.
 - **No lymph nodes or tonsils** — Topic 10 shows spleen and thymus.
 
 ---

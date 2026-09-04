@@ -49,6 +49,15 @@ ORGANS = [
   ('bigarteries', 'Major arteries',    'circulation', ['FMA3941','FMA4058','FMA3953','FMA4694',
                                                        'FMA14765','FMA14766','FMA18806','FMA18807',
                                                        'FMA18809','FMA18810'], 5000),
+  # the rest of the vascular tree — thin tubes, so they get a generous budget
+  ('vessels',     'Blood vessels',     'circulation',
+     ['FMA3802','FMA3818','FMA76994','FMA3895','FMA4685','FMA71669','FMA71670',   # coronary arteries
+      'FMA4706','FMA4707','FMA4713','FMA71567','FMA76751',                         # cardiac veins
+      'FMA4761','FMA4751','FMA4762','FMA4754','FMA4763','FMA4755',                 # neck and shoulder veins
+      'FMA50737','FMA14771','FMA14768','FMA14773','FMA14749','FMA14750',           # gut and liver arteries
+      'FMA14331','FMA14332',                                                       # splenic, mesenteric veins
+      'FMA21387','FMA21388','FMA18885','FMA18886','FMA18887','FMA18888'],          # iliac veins
+     22000),
 
   # ---- T10 diseases and immunity ---------------------------------------
   ('spleen',      'Spleen',            'immunity',   ['FMA7196'], 5000),

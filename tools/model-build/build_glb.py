@@ -10,7 +10,7 @@ COLOUR = {  # sensible anatomical base colours; the viewer lights them further
  'rectum':(190,130,110,255),'liver':(140,60,58,255),'gallbladder':(120,150,86,255),
  'pancreas':(214,178,120,255),
  'heart':(176,44,44,255),'aorta':(196,60,54,255),'venacava':(72,96,160,255),
- 'pulmvessels':(150,80,120,255),'bigarteries':(190,64,58,255),
+ 'pulmvessels':(150,80,120,255),'bigarteries':(190,64,58,255),'vessels':(182,58,64,255),
  'spleen':(122,66,96,255),'thymus':(216,182,150,255),
  'trachea':(196,196,206,255),'bronchi':(186,188,200,255),
  'lungR':(226,150,150,255),'lungL':(226,150,150,255),'diaphragm':(196,110,96,255),

@@ -119,6 +119,13 @@
   "tris": 5000
  },
  {
+  "system": "circulation",
+  "organ": "vessels",
+  "name": "Blood vessels",
+  "meshes": 32,
+  "tris": 22000
+ },
+ {
   "system": "immunity",
   "organ": "spleen",
   "name": "Spleen",
