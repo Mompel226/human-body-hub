@@ -91,8 +91,6 @@ a{color:inherit;text-decoration:none}
 /* beside the organ, when there is no room above it — see pinTag() in js/hub.js */
 .tag.tag--side{transform:translate(0,-50%) scale(.96)}
 .tag.on.tag--side{transform:translate(0,-50%) scale(1)}
-.tag.tag--side.tag--left{transform:translate(-100%,-50%) scale(.96)}
-.tag.on.tag--side.tag--left{transform:translate(-100%,-50%) scale(1)}
 .tag__pill{
   display:block;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;
   text-transform:uppercase;color:#08121A;background:var(--c);padding:5px 11px;border-radius:2px;
@@ -232,6 +230,7 @@ svg[data-focus="digestion"] #o-intestines{transform-box:fill-box;transform-origi
   .plate{padding:16px 10px 150px}
   .plate svg{height:42vh;max-height:400px}
   .plate__mark{position:static;text-align:center;margin-bottom:6px}
+  .tag__pill{font-size:10px;letter-spacing:.09em;padding:4px 9px}   /* room is tight beside a head */
   .sheet{overflow:visible;padding:8px 20px 26px}
   .queue{grid-template-columns:1fr}
 }

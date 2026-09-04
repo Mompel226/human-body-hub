@@ -175,7 +175,7 @@
     var o = el.getBoundingClientRect(), f = frame.getBoundingClientRect();
     tag.style.setProperty('--c', 'var(--g-' + t.sys + ')');
     tag.querySelector('.tag__pill').textContent = LANDMARK[t.sys] || t.title;
-    tag.classList.remove('tag--side', 'tag--left');
+    tag.classList.remove('tag--side');
     tag.classList.add('on');
 
     /* Above the organ is where it belongs — clear of what it names. But an organ near the
@@ -189,11 +189,10 @@
       tag.style.top  = above + 'px';
       return;
     }
-    var toRight = o.right - f.left + 12;
-    var fits = toRight + w <= f.width - 6;
     tag.classList.add('tag--side');
-    if (!fits) tag.classList.add('tag--left');
-    tag.style.left = (fits ? toRight : (o.left - f.left - 12)) + 'px';
+    var left = o.right - f.left + 12;                 /* beside the head, on its right */
+    left = Math.min(left, f.width - 8 - w);           /* but never off the edge of the plate */
+    tag.style.left = Math.max(8, left) + 'px';
     tag.style.top  = (o.top + o.height / 2 - f.top) + 'px';
   }
 
