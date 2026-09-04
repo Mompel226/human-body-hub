@@ -12,12 +12,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/hub.css?v=26">
+<link rel="stylesheet" href="css/hub.css?v=1788521748">
 <style>
   /* the 3D stage replaces the flat plate, everything else is the hub's */
   #stage{position:absolute;inset:0;z-index:1}
   #stage canvas{display:block;width:100%;height:100%;outline:none}
   .plate__frame{width:100%}
+  /* Phones and tablets. On the flat plate the specimen is an inline <svg>, and the shared
+     mobile rule gives THAT its height. Here the specimen is a canvas inside an absolutely
+     positioned #stage, which contributes no height at all — so the frame collapsed to zero
+     and the body simply was not there. The page still looked loaded: slab, controls,
+     caption, no specimen. Give the frame a height of its own. */
+  @media (max-width:900px){
+    .plate__frame{min-height:min(56vh,470px)}
+    .plate{padding-bottom:22px}      /* the 150px was room for the flat plate's caption */
+  }
   .loading{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;
     font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
@@ -94,13 +103,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="js/topics.js?v=11"></script>
+<script src="js/topics.js?v=1788521748"></script>
 <script type="importmap">
 {"imports":{
   "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
   "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
 }}
 </script>
-<script type="module" src="js/body3d.js?v=11"></script>
+<script type="module" src="js/body3d.js?v=1788521748"></script>
 </body>
 </html>
