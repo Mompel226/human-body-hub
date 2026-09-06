@@ -8,7 +8,7 @@ For a lab to link **back**, add one line to that lab's `index.html`, inside
 existing `.hbtn` class, so no CSS changes are needed:
 
 ```html
-<a class="hbtn" href="https://mompel226.github.io/IGCSE-revision-app/"
+<a class="hbtn" href="https://mompel226.github.io/human-body-hub/"
    title="All of the Biology Labs">← All labs</a>
 ```
 

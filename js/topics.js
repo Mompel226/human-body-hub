@@ -1,5 +1,5 @@
 /* ============================================================
-   Biology Labs — the topic register
+   Human Body Hub — the topic register
    ------------------------------------------------------------
    THIS IS THE ONLY FILE YOU EDIT WHEN A NEW LAB IS FINISHED.
    Give the topic a `url`, change `status` to "live", done.

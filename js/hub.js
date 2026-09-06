@@ -1,5 +1,5 @@
 /* ============================================================
-   Biology Labs — the hub
+   Human Body Hub — the shelf
    Reads window.TOPICS, builds the paper side, and wires it to
    the specimen. Adding a lab means editing topics.js only.
    ============================================================ */

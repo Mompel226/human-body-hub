@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>🫀 &nbsp;Biology Labs</h1>
+<h1>🫀 &nbsp;Human Body Hub</h1>
 
 **Interactive revision for Cambridge IGCSE Biology 0610 — the human body.**
 
@@ -9,8 +9,8 @@ sit; open the lab and work through the topic with questions that mark themselves
 
 <br>
 
-[![Open the site](https://img.shields.io/badge/▶_Open_the_site-0969DA?style=for-the-badge&logoColor=white)](https://mompel226.github.io/IGCSE-revision-app/)
-[![Light version](https://img.shields.io/badge/Light_version-218BFF?style=for-the-badge&logoColor=white)](https://mompel226.github.io/IGCSE-revision-app/plate.html)
+[![Open the site](https://img.shields.io/badge/▶_Open_the_site-0969DA?style=for-the-badge&logoColor=white)](https://mompel226.github.io/human-body-hub/)
+[![Light version](https://img.shields.io/badge/Light_version-218BFF?style=for-the-badge&logoColor=white)](https://mompel226.github.io/human-body-hub/plate.html)
 
 ![IGCSE Biology 0610](https://img.shields.io/badge/IGCSE_Biology-0610-3D7A54)
 ![Free to use](https://img.shields.io/badge/students-no_sign--up_needed-6FA287)
@@ -28,7 +28,7 @@ by **Dr Daniel Mompel Riera** · NLCS Jeju
 
 > [!TIP]
 > **Send them the link and you are done.**
-> [mompel226.github.io/IGCSE-revision-app](https://mompel226.github.io/IGCSE-revision-app/)
+> [mompel226.github.io/human-body-hub](https://mompel226.github.io/human-body-hub/)
 >
 > No account, no sign-up, no install, nothing to pay. It works on a phone, a Chromebook or
 > a school PC, and their progress is saved in their own browser. Anyone in the world is
@@ -163,8 +163,8 @@ the whole thing under your own name, and you want it pointing at *your* labs rat
 
 | # | Do this |
 |:--:|---|
-| **a** | Fork **[Mompel226/IGCSE-revision-app](https://github.com/Mompel226/IGCSE-revision-app)** the same way. |
-| **b** | In your fork: **Settings ▸ Pages** ▸ branch **main** ▸ **Save**. It goes live at `https://YOUR-USERNAME.github.io/IGCSE-revision-app/`. |
+| **a** | Fork **[Mompel226/human-body-hub](https://github.com/Mompel226/human-body-hub)** the same way. |
+| **b** | In your fork: **Settings ▸ Pages** ▸ branch **main** ▸ **Save**. It goes live at `https://YOUR-USERNAME.github.io/human-body-hub/`. |
 | **c** | Open **`js/topics.js`**, press the ✏️ pencil, and change every `url:` to your own fork's address — `https://YOUR-USERNAME.github.io/digestion-lab/` and so on for each lab you host. **Commit changes.** |
 | **d** | Share **your** hub link with your classes. |
 

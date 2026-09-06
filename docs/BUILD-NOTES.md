@@ -1,4 +1,4 @@
-# Biology Labs — the hub
+# Human Body Hub — the shelf
 
 The landing page for the IGCSE Biology revision labs.
 
@@ -8,7 +8,7 @@ the reading happens. Point at a lab and its system lights up in the body with th
 organ named; point at an organ and the lab it belongs to lights up. Left alone,
 the plate tours the nine systems by itself. It all fits on one screen.
 
-**Live:** https://mompel226.github.io/IGCSE-revision-app/ — the 3D body at the root,
+**Live:** https://mompel226.github.io/human-body-hub/ — the 3D body at the root,
 the flat plate at `/plate.html`.
 
 ---
@@ -70,10 +70,10 @@ Keep the footer credit if you add more Servier art.
 ## Publishing
 
 The hub is a plain static site — no build step beyond `inline-plate.py`. It is
-published from the **`IGCSE-revision-app`** repository, `main` branch, by GitHub
+published from the **`human-body-hub`** repository, `main` branch, by GitHub
 Pages:
 
-- `mompel226.github.io/IGCSE-revision-app/` → this hub
+- `mompel226.github.io/human-body-hub/` → this hub
 - `mompel226.github.io/digestion-lab/` → the first lab
 - `mompel226.github.io/<next-lab>/` → each one after that
 

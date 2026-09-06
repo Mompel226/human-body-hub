@@ -1,5 +1,5 @@
 /* ============================================================
-   Biology Labs — the body in three dimensions
+   Human Body Hub — the body in three dimensions
    The model is BodyParts3D: every organ is a separate mesh sitting
    in the coordinate frame of the MRI it was segmented from, so the
    anatomy is not arranged by hand — it is where it was measured.
