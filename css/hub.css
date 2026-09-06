@@ -133,6 +133,12 @@ svg[data-focus="digestion"] #o-intestines{transform-box:fill-box;transform-origi
   min-height:0;overflow:auto;padding:clamp(24px,3.4vh,38px) clamp(26px,3.6vw,56px) 20px;
   display:flex;flex-direction:column;gap:clamp(12px,1.8vh,20px)
 }
+.up{
+  display:inline-block;margin-bottom:10px;font-family:var(--mono);font-size:10.5px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--i-gas-exchange);
+  border-bottom:1px solid rgba(11,106,140,.35);transition:color .15s,border-color .15s
+}
+.up:hover{color:#08536E;border-bottom-color:#08536E}
 .masthead h1{font-family:var(--serif);font-size:clamp(28px,3.2vw,40px);letter-spacing:-.015em}
 .masthead h1 em{font-style:italic;color:var(--i-gas-exchange)}
 .masthead .eyebrow{margin-top:6px;display:block}
