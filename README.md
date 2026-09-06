@@ -24,6 +24,18 @@ by **Dr Daniel Mompel Riera** · NLCS Jeju
 
 ---
 
+## 🧭 Where this sits
+
+This is one **shelf** of the [Biology Hub](https://mompel226.github.io/biology-hub/), the front
+door to every Biology app at NLCS Jeju. A student goes front door → this shelf → a lab. The
+other shelves — Foundations, Plants, Life on Earth — are being built as their own repositories;
+this one covers the human body, topics 7 and 9–16. The link at the top of the page goes back up.
+
+Behind this shelf: the [Digestion Lab](https://mompel226.github.io/digestion-lab/) (Topic 7,
+live) and eight more labs being built. Related but separate: the
+[Protein & Enzyme Sim](https://mompel226.github.io/protein-enzyme-sim/), which sits on the
+Foundations shelf.
+
 ## 🧑‍🎓 For your students — there is nothing to set up
 
 > [!TIP]
