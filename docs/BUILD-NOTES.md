@@ -100,46 +100,20 @@ assets/anatomy/body.svg   the specimen (source of the inlined plate)
 assets/anatomy/organs/    the organ paintings
 tools/inline-plate.py     re-inlines body.svg into index.html
 
-apps-script/Code.gs             the marks spreadsheet: one script for every lab
-apps-script/ClassroomImport.html  the import window it opens
-tools/gastest.js          runs Code.gs against a stand-in for Google Sheets
-tools/sync-readme.mjs     copies apps-script/ into the README's paste blocks
-README.md                 the front page, and the copy-paste setup for the sheet
+README.md                 the front page
 docs/link-back.md         the one line that points a lab back here
 ```
 
-The spreadsheet lives here rather than in any one lab because it collects **all**
-of them — see *The marks spreadsheet* in `README.md`.
+### The marks spreadsheet is not here any more
 
-### After changing anything in `apps-script/`
+It collects **every** lab, not this shelf's, so it moved to the main hub on 7 September 2026:
+`Code.gs`, `ClassroomImport.html` and the `gastest.js` harness now live in
+[**biology-hub**](https://github.com/Mompel226/biology-hub) (and its open twin,
+[igcse-biology-hub](https://github.com/Mompel226/igcse-biology-hub)), with the whole set-up
+guide in that repository's README. Nothing about it remains here.
 
-```
-node tools/gastest.js apps-script/Code.gs   # does it still work
-node tools/sync-readme.mjs                  # put it in the README
-```
-
-The README is how the spreadsheet gets installed — you copy those two blocks into
-the Apps Script editor — so a block that has drifted from the file installs a
-script nothing has ever run. `sync-readme.mjs` finds each block by the `<summary>`
-line above it, never by line number; `--check` changes nothing and exits non-zero
-if they differ.
-
-### The harness
-
-```
-node tools/gastest.js apps-script/Code.gs
-```
-
-Runs the whole script against a stand-in for Google Sheets, Classroom and the token
-endpoint. It cannot tell you whether the spreadsheet *looks* right, but it runs every
-menu item and button, an import, a first hand-in, a second and third, a part-way one,
-a forged one, a stranger's, and the dashboard — and fails on anything undefined or out
-of bounds. Exit code is non-zero on any failure.
-
-It also checks the names that are reached **as strings** rather than called: every
-`addItem` in the menu, and every `google.script.run` call in `ClassroomImport.html`.
-Nothing else can catch those — Apps Script only reports them when a human clicks and
-gets *Script function not found*.
+`tools/sync-readme.mjs` went with it — it kept a copy of the script pasted inside this README
+in step with the real file, and that copy is gone: the guide links to the files instead.
 
 ---
 
