@@ -35,9 +35,14 @@
 var SHEET_ID = 'PASTE_YOUR_SHEET_ID_HERE';
 
 /* Every lab that can hand in. `id` is what the site sends as `app`; `tab` is the
-   tab it is written to. Add a row here (or in the Labs tab) as each lab is built. */
+   tab it is written to. Add a row here (or in the Labs tab) as each lab is built.
+   `questions` MUST match what the lab actually asks — it flags a hand-in as NOT ALL
+   QUESTIONS and it is the range a completion code is checked against, so a number that
+   is too low flags every hand-in and fails to verify any code above it. The counts are
+   kept in labs-shared/labs.json, written by each lab's own build. */
 var LABS = [
-  { id:'digestion-lab',     name:'Digestion',        topic:'7 · Human nutrition',       questions:113 },
+  { id:'digestion-lab',     name:'Digestion',        topic:'7 · Human nutrition',       questions:123 },
+  { id:'classification-lab', name:'Classification',  topic:'1 · Characteristics and classification', questions:64 },
   { id:'circulation-lab',   name:'Circulation',      topic:'9 · Transport in animals',  questions:0 },
   { id:'immunity-lab',      name:'Immunity',         topic:'10 · Diseases and immunity',questions:0 },
   { id:'gas-exchange-lab',  name:'Gas exchange',     topic:'11 · Gas exchange',         questions:0 },
