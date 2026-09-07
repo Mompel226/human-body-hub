@@ -129,6 +129,10 @@ function onOpen() {
 function doPost(e) {
   try {
     var d = JSON.parse(e.postData.contents);
+
+    /* The hubs ask for a student's own scores back, so a cleared browser or a new device does
+       not start from nothing. Handled before anything else, and it only ever reads. */
+    if (String(d.action || '') === 'progress') return _ownProgress(d);
     var lab = _labById(String(d.app || ''));
     if (!lab) return _text('unknown lab');
 
@@ -1201,4 +1205,55 @@ function _code(labId, name, form, score) {
   return 'DL-' + chunk(s1) + '-' + chunk(s2);
 }
 function _tidy(s) { return String(s || '').toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim(); }
+/* ============================================================
+   Giving a student their own scores back
+   ------------------------------------------------------------
+   A student's progress lives in their browser. Clear the history, or open a lab on another
+   device, and it is gone. What was HANDED IN is here, so the hubs ask for it back.
+
+   Read only, and only ever the row belonging to the person holding the token. The email comes
+   from the verified token, never from the request, so nobody can ask for anybody else's — and
+   nothing about the class, the roster or another student is returned.
+   ============================================================ */
+function _ownProgress(d) {
+  if (!CLIENT_ID) return _json({ ok: false, why: 'sign-in is not set up' });
+  var who = _whoIs(d.token);
+  if (!who) return _json({ ok: false, why: 'not signed in' });
+
+  var out = {}, ss;
+  try { ss = _ss(); } catch (err) { return _json({ ok: false, why: 'no spreadsheet' }); }
+
+  for (var i = 0; i < LABS.length; i++) {
+    var lab = LABS[i];
+    var sh = ss.getSheetByName(lab.name);          /* a lab with no tab yet is simply skipped */
+    if (!sh) continue;
+    var last = sh.getLastRow();
+    if (last < 2) continue;
+
+    var vals = sh.getRange(2, 1, last - 1, LAB_COLS.length).getValues();
+    for (var r = 0; r < vals.length; r++) {
+      if (String(vals[r][LAB_EMAIL - 1] || '').toLowerCase() !== who.email) continue;
+      var score = Number(vals[r][2]);              /* Score */
+      if (!(score > 0)) break;                     /* a row exists but nothing handed in yet */
+      out[lab.id] = {
+        done:      score,
+        total:     Number(vals[r][3]) || lab.questions || 0,
+        complete:  String(vals[r][5] || '') === 'complete',
+        checks:    Number(vals[r][6]) || 0,
+        firstTime: Number(vals[r][7]) || 0,
+        handIns:   Number(vals[r][9]) || 0,
+        handedIn:  true,
+        at:        vals[r][10] ? new Date(vals[r][10]).toISOString() : null
+      };
+      break;
+    }
+  }
+  return _json({ ok: true, name: who.name || '', labs: out });
+}
+
+function _json(o) {
+  return ContentService.createTextOutput(JSON.stringify(o))
+                       .setMimeType(ContentService.MimeType.JSON);
+}
+
 function _text(m) { return ContentService.createTextOutput(m).setMimeType(ContentService.MimeType.TEXT); }
