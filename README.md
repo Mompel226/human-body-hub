@@ -7,8 +7,8 @@
 Point at a lab and its organs light up where they really sit. Open the lab and work through the
 topic with questions that mark themselves.
 
-[![Open the site](https://img.shields.io/badge/▶_Open_the_site-0969DA?style=for-the-badge&logoColor=white)](https://mompel226.github.io/human-body-hub/)
-[![Light version](https://img.shields.io/badge/Light_version-218BFF?style=for-the-badge&logoColor=white)](https://mompel226.github.io/human-body-hub/plate.html)
+[![Open the site](https://img.shields.io/badge/▶_Open_the_site-0969DA?style=for-the-badge&logoColor=white)](https://nlcsbiology.com/human-body-hub/)
+[![Light version](https://img.shields.io/badge/Light_version-218BFF?style=for-the-badge&logoColor=white)](https://nlcsbiology.com/human-body-hub/plate.html)
 
 ![IGCSE Biology 0610](https://img.shields.io/badge/IGCSE_Biology-0610-3D7A54)
 ![No sign-up](https://img.shields.io/badge/students-no_sign--up_needed-6FA287)
@@ -23,13 +23,13 @@ by **Dr Daniel Mompel Riera** · NLCS Jeju
 
 ## Where this sits
 
-One **shelf** of the [Biology Hub](https://mompel226.github.io/biology-hub/), the front door to
+One **shelf** of the [Biology Hub](https://nlcsbiology.com/biology-hub/), the front door to
 every Biology app here. A student goes front door → this shelf → a lab. The link at the top of
 the page goes back up.
 
 | # | Topic | Lab | |
 |:--:|-------|-----|:--:|
-| 7 | Human nutrition | [**Digestion Lab**](https://mompel226.github.io/digestion-lab/) | 🟢 live |
+| 7 | Human nutrition | [**Digestion Lab**](https://nlcsbiology.com/digestion-lab/) | 🟢 live |
 | 9 | Transport in animals | Circulation Lab | ⚪ soon |
 | 10 | Diseases and immunity | Immunity Lab | ⚪ soon |
 | 11 | Gas exchange in humans | Gas Exchange Lab | ⚪ soon |

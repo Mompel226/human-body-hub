@@ -2,7 +2,7 @@
    progress.js — how a student is doing, everywhere.
    SHARED: labs-shared/progress.js is the source; each hub's build copies it in.
 
-   Every app is served from one origin, mompel226.github.io, so a lab's record in
+   Every app is served from one origin, nlcsbiology.com, so a lab's record in
    localStorage is readable by every hub. This file is the ONLY thing that knows how
    to read it, so a hub never has to know a lab's internals — add a lab to
    labs-shared/labs.json and it appears everywhere, with no hub changed.
