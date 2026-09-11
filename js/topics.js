@@ -14,6 +14,11 @@
    side    which column the label sits in: "l" or "r"
    status  "live" | "build" | "planned"
    url     the published lab, or null
+   detail  ONLY A FALLBACK. The stations/questions line on an open lab is read from the
+           register (js/data/labs.js, generated from labs-shared/labs.json) and matched to
+           this topic by its url, so it follows the lab when the lab grows. This string is
+           used only if that register fails to load. Keep it right anyway —
+           `node tools/status.mjs` fails if it disagrees with the register.
    ============================================================ */
 window.TOPICS = [
   { id:'digestion',    no:7,  year:'Y10', side:'l', sys:'digestion',    anchor:'o-stomach',

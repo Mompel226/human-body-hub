@@ -10,6 +10,32 @@ import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
+/* ---------- the lab register, and this browser's own progress ----------
+   The same two helpers as js/hub.js: index.html is drawn by this file and plate.html by
+   that one, so a change to the lab card must be made in BOTH or the two pages disagree.
+   A count is never typed here — it is read from js/data/labs.js, generated from
+   labs-shared/labs.json. This hub carries no marks address: it is one repository linked
+   from both editions of the front door, so it shows only what this browser remembers. */
+const REG_ = window.LABS_REGISTER || {}, LABS_ = REG_.labs || [], P_ = window.LabProgress;
+function labFor(t) {
+  const u = String(t.url || '').replace(/\/$/, '');
+  return LABS_.filter(l => String(l.url || '').replace(/\/$/, '') === u)[0] || null;
+}
+function statOf(t) {
+  const l = labFor(t);
+  return (l && l.stations && l.questions) ? `${l.stations} stations · ${l.questions} questions` : (t.detail || '');
+}
+function progOf(t) {
+  const l = labFor(t); if (!l || !P_) return '';
+  const p = P_.local(l);
+  if (!p.started && !p.handedIn) return '';
+  return `<span class="hero__prog" title="${p.done} of ${p.total} questions answered correctly">` +
+    `<span class="pbar"><span class="pbar__fill" style="width:${P_.pct(p)}%"></span></span>` +
+    `<b>${P_.pct(p)}%</b><small>${p.done} of ${p.total}${p.handedIn ? ' · handed in' : ''}</small></span>`;
+}
+
+
+
 const T = window.TOPICS || [];
 const BY_SYS = {}; T.forEach(t => { if (t.sys) BY_SYS[t.sys] = t; });
 
@@ -199,7 +225,7 @@ live.forEach(t => {
     `<p class="hero__sub">${t.title}</p>` +
     `<p class="hero__blurb">${t.blurb}</p>` +
     `<span class="hero__foot"><span class="hero__go">Open the lab</span>` +
-      (t.detail ? `<span class="hero__stat">${t.detail}</span>` : '') + `</span>`;
+      (statOf(t) ? `<span class="hero__stat">${statOf(t)}</span>` : '') + `</span>` + progOf(t);
   wire(a, t);
   document.getElementById('heroSlot').appendChild(a);
 });
