@@ -8,7 +8,7 @@ the reading happens. Point at a lab and its system lights up in the body with th
 organ named; point at an organ and the lab it belongs to lights up. Left alone,
 the plate tours the nine systems by itself. It all fits on one screen.
 
-**Live:** https://mompel226.github.io/human-body-hub/ — the 3D body at the root,
+**Live:** https://nlcsbiology.com/human-body-hub/ — the 3D body at the root,
 the flat plate at `/plate.html`.
 
 ---
@@ -22,7 +22,7 @@ Edit **`js/topics.js`**. Nothing else. Give the topic a `url` and set
 { id:'circulation', no:9, year:'Y10', side:'l', sys:'circulation', anchor:'o-heart',
   title:'Transport in animals', lab:'Circulation Lab',
   blurb:'…',
-  status:'live', url:'https://mompel226.github.io/circulation-lab/' },
+  status:'live', url:'https://nlcsbiology.com/circulation-lab/' },
 ```
 
 - `sys` is the system that lights up on the plate.
@@ -73,9 +73,9 @@ The hub is a plain static site — no build step beyond `inline-plate.py`. It is
 published from the **`human-body-hub`** repository, `main` branch, by GitHub
 Pages:
 
-- `mompel226.github.io/human-body-hub/` → this hub
-- `mompel226.github.io/digestion-lab/` → the first lab
-- `mompel226.github.io/<next-lab>/` → each one after that
+- `nlcsbiology.com/human-body-hub/` → this hub
+- `nlcsbiology.com/digestion-lab/` → the first lab
+- `nlcsbiology.com/<next-lab>/` → each one after that
 
 Each lab is its own repository. They are linked by absolute URL in both
 directions — `url` in `js/topics.js` going out, and one line in each lab's

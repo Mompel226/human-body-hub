@@ -24,7 +24,7 @@ window.LABS_REGISTER = {
       "topicNo": 7,
       "topic": "Human nutrition",
       "shelf": "human-body",
-      "url": "https://mompel226.github.io/digestion-lab/",
+      "url": "https://nlcsbiology.com/digestion-lab/",
       "store": "digestion-lab.v2",
       "stations": 14,
       "questions": 123,
@@ -36,7 +36,7 @@ window.LABS_REGISTER = {
       "topicNo": 1,
       "topic": "Characteristics and classification",
       "shelf": "life-on-earth",
-      "url": "https://mompel226.github.io/classification-lab/",
+      "url": "https://nlcsbiology.com/classification-lab/",
       "store": "classification-lab.v1",
       "stations": 10,
       "questions": 64,
@@ -48,7 +48,7 @@ window.LABS_REGISTER = {
       "topicNo": 6,
       "topic": "Plants: 6, 8, 14.5, 16.3, 18.2",
       "shelf": "plants",
-      "url": "https://mompel226.github.io/plants-lab/",
+      "url": "https://nlcsbiology.com/plants-lab/",
       "store": "plants-lab.v1",
       "stations": 12,
       "questions": 107,
@@ -62,15 +62,15 @@ window.LABS_REGISTER = {
     },
     { "id": "human-body",
       "name": "The human body",
-      "url": "https://mompel226.github.io/human-body-hub/"
+      "url": "https://nlcsbiology.com/human-body-hub/"
     },
     { "id": "plants",
       "name": "Plants",
-      "url": "https://mompel226.github.io/plants-hub/"
+      "url": "https://nlcsbiology.com/plants-hub/"
     },
     { "id": "life-on-earth",
       "name": "Life on Earth",
-      "url": "https://mompel226.github.io/life-on-earth-hub/"
+      "url": "https://nlcsbiology.com/life-on-earth-hub/"
     }
   ]
 };
