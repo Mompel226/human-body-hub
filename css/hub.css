@@ -173,6 +173,16 @@ svg[data-focus="digestion"] #o-intestines{transform-box:fill-box;transform-origi
 .hero:hover .hero__go{background:#7A4F07}
 .hero__stat{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--text-3)}
 
+/* how far this browser has got in the open lab — absent until it has been opened,
+   so a student who has never touched it sees no empty bar. The colour is the lab's
+   own system ink (--c, set on .hero), not a fifth accent. */
+.hero__prog{display:flex;align-items:center;gap:10px;margin-top:13px;padding-top:12px;border-top:1px solid var(--rule)}
+.hero__prog .pbar{flex:1 1 auto;min-width:70px;height:4px;border-radius:2px;background:#E6E4DC;overflow:hidden}
+.hero__prog .pbar__fill{display:block;height:100%;background:var(--c);border-radius:2px;transition:width .5s ease}
+.hero__prog b{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--c);letter-spacing:.04em}
+.hero__prog small{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--text-3)}
+@media (prefers-reduced-motion:reduce){.hero__prog .pbar__fill{transition:none}}
+
 /* the eight still to come */
 .queue{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:2px 18px}
 .q__btn{

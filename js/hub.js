@@ -7,6 +7,40 @@
   'use strict';
 
   var T       = window.TOPICS || [];
+
+  /* ---------- the lab register, and this browser's own progress ----------
+     WHICH labs exist and how big they are lives in js/data/labs.js, generated from
+     labs-shared/labs.json by tools/stamp.mjs. HOW to read a lab's record lives in
+     js/progress.js, shared with every hub. So a count is never typed here: it is read from
+     the register, and it follows a lab when that lab grows. Before this, "13 stations ·
+     113 questions" sat in topics.js for days after the Digestion Lab reached 14 and 123.
+
+     This hub carries no marks address and must not: it is ONE repository, linked from both
+     the NLCS and the open edition of the front door. It shows only what this browser
+     remembers. Signing in, and bringing handed-in work back from a teacher's spreadsheet,
+     belongs to the front door, where each school sets its own address in js/local.js. */
+  var REG = window.LABS_REGISTER || {}, LABS = REG.labs || [], P = window.LabProgress;
+
+  function labFor(t) {
+    var u = String(t.url || '').replace(/\/$/, '');
+    for (var i = 0; i < LABS.length; i++)
+      if (String(LABS[i].url || '').replace(/\/$/, '') === u) return LABS[i];
+    return null;
+  }
+  function statOf(t) {                      /* "14 stations · 123 questions", from the register */
+    var l = labFor(t);
+    if (l && l.stations && l.questions) return l.stations + ' stations · ' + l.questions + ' questions';
+    return t.detail || '';
+  }
+  function progOf(t) {                      /* '' until this browser has opened the lab */
+    var l = labFor(t); if (!l || !P) return '';
+    var p = P.local(l);
+    if (!p.started && !p.handedIn) return '';
+    return '<span class="hero__prog" title="' + p.done + ' of ' + p.total + ' questions answered correctly">' +
+      '<span class="pbar"><span class="pbar__fill" style="width:' + P.pct(p) + '%"></span></span>' +
+      '<b>' + P.pct(p) + '%</b><small>' + p.done + ' of ' + p.total +
+      (p.handedIn ? ' · handed in' : '') + '</small></span>';
+  }
   var frame   = document.getElementById('frame');
   var tag     = document.getElementById('tag');
   var said    = document.getElementById('said');
@@ -42,8 +76,8 @@
       '<p class="hero__sub">' + t.title + '</p>' +
       '<p class="hero__blurb">' + t.blurb + '</p>' +
       '<span class="hero__foot"><span class="hero__go">Open the lab</span>' +
-        (t.detail ? '<span class="hero__stat">' + t.detail + '</span>' : '') +
-      '</span>';
+        (statOf(t) ? '<span class="hero__stat">' + statOf(t) + '</span>' : '') +
+      '</span>' + progOf(t);
     wire(a, t);
     document.getElementById('heroSlot').appendChild(a);
   });

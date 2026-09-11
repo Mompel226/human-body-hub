@@ -1,0 +1,75 @@
+{
+  "_comment": [
+    "THE SINGLE REGISTER OF LABS. One fact, one place.",
+    "The same numbers used to live in three files and two were wrong, which made every hand-in",
+    "flag NOT ALL QUESTIONS and broke completion codes above the stated total.",
+    "",
+    "stations/questions are written by each lab's own tools/build.mjs — do not edit them by",
+    "hand, they will be overwritten. Everything else is edited here.",
+    "",
+    "store   the localStorage key the lab keeps its progress under. It is NOT always <id>.v2:",
+    "        the Classification Lab uses .v1. Always read it from here.",
+    "shelf   which hub the lab sits behind, so progress can be rolled up.",
+    "node tools/status.mjs reports anything that disagrees with this file.",
+    "",
+    "NOTHING THAT BELONGS TO ONE SCHOOL GOES IN HERE — this file is shared by every",
+    "edition. The address marks are sent to is each school's own, so it lives in",
+    "js/local.js beside the doors and the site name."
+  ],
+  "labs": [
+    { "id": "digestion-lab",
+      "name": "Digestion Lab",
+      "short": "Digestion",
+      "topicNo": 7,
+      "topic": "Human nutrition",
+      "shelf": "human-body",
+      "url": "https://mompel226.github.io/digestion-lab/",
+      "store": "digestion-lab.v2",
+      "stations": 14,
+      "questions": 123,
+      "status": "live"
+    },
+    { "id": "classification-lab",
+      "name": "Classification Lab",
+      "short": "Classification",
+      "topicNo": 1,
+      "topic": "Characteristics and classification",
+      "shelf": "life-on-earth",
+      "url": "https://mompel226.github.io/classification-lab/",
+      "store": "classification-lab.v1",
+      "stations": 10,
+      "questions": 64,
+      "status": "live"
+    },
+    { "id": "plants-lab",
+      "name": "Plants Lab",
+      "short": "Plants",
+      "topicNo": 6,
+      "topic": "Plants: 6, 8, 14.5, 16.3, 18.2",
+      "shelf": "plants",
+      "url": "https://mompel226.github.io/plants-lab/",
+      "store": "plants-lab.v1",
+      "stations": 12,
+      "questions": 91,
+      "status": "live"
+    }
+  ],
+  "shelves": [
+    { "id": "foundations",
+      "name": "Foundations",
+      "url": null
+    },
+    { "id": "human-body",
+      "name": "The human body",
+      "url": "https://mompel226.github.io/human-body-hub/"
+    },
+    { "id": "plants",
+      "name": "Plants",
+      "url": "https://mompel226.github.io/plants-hub/"
+    },
+    { "id": "life-on-earth",
+      "name": "Life on Earth",
+      "url": "https://mompel226.github.io/life-on-earth-hub/"
+    }
+  ]
+}
