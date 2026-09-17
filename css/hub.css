@@ -251,3 +251,8 @@ svg[data-focus="digestion"] #o-intestines{transform-box:fill-box;transform-origi
   .queue{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* the maker's name, wherever it appears: a quiet link out to who made this. Same dotted
+   underline the header credit already uses, so it reads as a link without shouting. */
+.by-me{color:inherit;text-decoration:none;border-bottom:1px dotted currentColor}
+.by-me:hover,.by-me:focus-visible{border-bottom-style:solid}
