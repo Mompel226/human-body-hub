@@ -1,0 +1,17 @@
+Copyright (c) 2026 Dr Daniel Mompel Riera
+
+This repository holds two different kinds of work, under two licences.
+
+  THE SOFTWARE — everything that runs: JavaScript, Google Apps Script,
+  Python, Swift, HTML structure, CSS and the build tools.
+      GNU Affero General Public License v3.0 — see LICENSE
+
+  THE TEACHING MATERIAL — question text, explanations, diagrams and images
+  made by the author, wherever they are stored (including inside .js files).
+      CC BY-NC-SA 4.0 — see LICENSE-CONTENT
+
+NOT COVERED BY EITHER: third-party images, photographs and media keep their
+own licences. Where a work shows picture credits, those are the terms.
+
+The copyright is held by one person, so other terms can be granted. If you
+want to use any of this commercially, ask: dmompelriera@nlcsjeju.kr
