@@ -10,7 +10,8 @@
    A lab keeps, under the key named in the register (NOT always <id>.v2 — the
    Classification Lab uses .v1):
      { <stationId>: { done:{i:true}, tried:{i:true}, per:{i:n}, one:{i:true}, sig, first } }
-   and, once handed in, <id>.submitted = { name, form, code, at, sent }.
+   and, once anything has reached the teacher's records, <id>.submitted = { at, sent, name }
+   (older copies carry { name, form, code, at, sent } from the days of handing in).
 
    Nothing here writes to a lab's record. Read only.
    ============================================================ */
@@ -27,9 +28,9 @@
     var rec = read(lab.store), sub = read(lab.id + '.submitted');
     var out = { id: lab.id, done: 0, tried: 0, stations: 0, checks: 0,
                 total: lab.questions || 0, ofStations: lab.stations || 0,
-                started: false, handedIn: !!(sub && sub.code), at: sub && sub.at || null,
+                started: false, handedIn: !!(sub && (sub.sent || sub.code)), at: sub && sub.at || null,
                 source: 'this browser' };
-    if (!rec || typeof rec !== 'object') { out.source = sub ? 'handed in' : 'not started'; return out; }
+    if (!rec || typeof rec !== 'object') { out.source = sub ? 'in the records' : 'not started'; return out; }
     Object.keys(rec).forEach(function (id) {
       var r = rec[id];
       if (!r || typeof r !== 'object' || !r.done) return;
@@ -44,7 +45,7 @@
     return out;
   }
 
-  /* The sheet knows only what was handed in, and only for a signed-in student. It is the
+  /* The sheet knows only what the labs saved, and only for a signed-in student. It is the
      backup, not the live state: a student's browser is normally ahead of it. So take
      whichever is further on, and never let a lower server score erase local work. */
   function merge(here, there) {
