@@ -63,7 +63,7 @@ window.LABS_REGISTER = {
       "url": "https://nlcsbiology.com/circulation-lab/",
       "store": "circulation-lab.v1",
       "stations": 12,
-      "questions": 97,
+      "questions": 114,
       "status": "live"
     }
   ],
