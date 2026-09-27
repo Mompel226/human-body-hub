@@ -34,10 +34,21 @@
     Object.keys(rec).forEach(function (id) {
       var r = rec[id];
       if (!r || typeof r !== 'object' || !r.done) return;
-      var n = 0, t = 0;
-      Object.keys(r.done).forEach(function (k) { if (r.done[k]) n++; });
-      Object.keys(r.tried || {}).forEach(function (k) { if (r.tried[k]) t++; });
+      /* Since September 2026 a station can be practised again (labs-shared/engine/sync.js): done /
+         tried are only the go the student is on now, and what they did before lives on in g1 (the
+         first go) and best — letters, one per question: 1 or f right, t tried. A student who
+         starts again has lost nothing, so the hub counts the best ever. */
+      var right = {}, tried = {};
+      Object.keys(r.done).forEach(function (k) { if (r.done[k]) right[k] = tried[k] = 1; });
+      Object.keys(r.tried || {}).forEach(function (k) { if (r.tried[k]) tried[k] = 1; });
+      [r.g1, r.best].forEach(function (s) {
+        String(s || '').split('').forEach(function (c, i) {
+          if (c === '1' || c === 'f') right[i] = tried[i] = 1; else if (c === 't') tried[i] = 1;
+        });
+      });
+      var n = Object.keys(right).length, t = Object.keys(tried).length;
       Object.keys(r.per || {}).forEach(function (k) { out.checks += r.per[k]; });
+      out.checks += Number(r.past) || 0;              /* checks made on earlier goes */
       out.done += n; out.tried += t;
       if (n || t) out.stations++;
     });
