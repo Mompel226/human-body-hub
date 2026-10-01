@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/hub.css?v=1790516583">
+<link rel="stylesheet" href="css/hub.css?v=1790781941">
 <style>
   /* the 3D stage replaces the flat plate, everything else is the hub's */
   #stage{position:absolute;inset:0;z-index:1}
@@ -56,7 +56,7 @@
        Give them a band of their own and start the specimen below it. */
     .toggles{top:10px;left:50%;right:auto;transform:translateX(-50%);justify-content:center}
     #stage{top:50px}
-    /* the touch wording is longer than the frame is wide, so let it wrap */
+    /* the hint is longer than a phone's frame is wide, so let it wrap */
     .hint{white-space:normal;max-width:min(86%,300px);text-align:center;line-height:1.6;
           font-size:9.5px;letter-spacing:.1em}
   }
@@ -78,7 +78,7 @@
         <button class="tg" id="tgMus"   aria-pressed="true">Muscle</button>
         <button class="tg" id="tgSpin"  aria-pressed="true">Turn</button>
       </div>
-      <span class="hint">Drag to turn · scroll to zoom</span>
+      <span class="hint">Drag to turn · scroll or pinch to zoom</span>
     </div>
 
       <span class="wm" aria-hidden="true">Dr Daniel Mompel Riera</span>
@@ -88,7 +88,7 @@
   <section class="sheet">
     <header class="masthead">
       <a class="up" href="https://nlcsbiology.com/biology-hub/" title="Every door: Foundations, the human body, Plants, Life on Earth">← Biology Hub</a>
-      <h1>Biology <em>Labs</em></h1>
+      <h1>Human <em>Body</em></h1>
       <span class="eyebrow">Cambridge IGCSE 0610 · the human body</span>
       <a class="switch" href="plate.html">On a slow connection? Use the light version</a>
     </header>
@@ -113,15 +113,25 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="js/data/labs.js?v=1790516583"></script>
-<script src="js/progress.js?v=1790516583"></script>
-<script src="js/topics.js?v=1790516583"></script>
+<script src="js/data/labs.js?v=1790781941"></script>
+<script src="js/progress.js?v=1790781941"></script>
+<script src="js/topics.js?v=1790781941"></script>
+<!-- three.js, from jsDelivr. "integrity" holds each file's SHA-384, for every file the 3D body loads (GLTFLoader also
+     loads utils/BufferGeometryUtils.js): a browser refuses a file that differs, and the light version still works.
+     A new version needs new hashes: curl -s <address> | openssl dgst -sha384 -binary | openssl base64 -A -->
 <script type="importmap">
 {"imports":{
   "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
   "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+},
+"integrity":{
+  "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js":"sha384-61S/Nu32S3E5+n+KpCOTb2eRYps6fVKm+9Gz1QBvSePFthb46f063Aa/qe/lykFZ",
+  "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js":"sha384-oxY9vSeh7Mrt5WmhN8xfWoDRnmoW9krEiRBY7vJKaK90jMUidM0fhbUwcblpBgTu",
+  "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js":"sha384-jHGXS4+FuVOBnZkNme2ury3Ccg5DWDLYK22xX/WGdZCZsjRM4J+3n6Qc4CXx1Hjf",
+  "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js":"sha384-qlO/ZugKPxAQUAvTlQoo0QECzxJIJySZmCF/DHdb2Xn/hHndFwX/vfUAC9Hbk6LP",
+  "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js":"sha384-ZGqh+dJjt6z9NHsWYYt+TPDFj8y+2If7naI6a6AkkyNZyH51CVS3HTWFh0njp4k6"
 }}
 </script>
-<script type="module" src="js/body3d.js?v=1790516583"></script>
+<script type="module" src="js/body3d.js?v=1790781941"></script>
 </body>
 </html>
