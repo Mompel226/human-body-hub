@@ -1,8 +1,10 @@
 /* ============================================================
    Human Body Hub — the topic register
    ------------------------------------------------------------
-   THIS IS THE ONLY FILE YOU EDIT WHEN A NEW LAB IS FINISHED.
-   Give the topic a `url`, change `status` to "live", done.
+   WHEN A NEW LAB IS FINISHED, this is the file to edit HERE: give the topic a `url` and
+   change `status` to "live". The lab also needs its row in labs-shared/labs.json, the front
+   door's js/shelves.js, the labs script's LABS and the sitemap: docs/BUILD-NOTES.md,
+   "Adding a lab", has the list.
 
    id      unique key
    no      Cambridge 0610 topic number, as taught here

@@ -17,7 +17,7 @@ by **Dr Daniel Mompel Riera** · NLCS Jeju
 
 </div>
 
-![The hub: a body reconstructed from MRI, with the gas exchange system lit](docs/img/hub-3d.png)
+![The hub: a body reconstructed from MRI, its muscles over the skeleton, beside the labs that are open](docs/img/hub-3d.png)
 
 ---
 
@@ -30,7 +30,7 @@ the page goes back up.
 | # | Topic | Lab | |
 |:--:|-------|-----|:--:|
 | 7 | Human nutrition | [**Digestion Lab**](https://nlcsbiology.com/digestion-lab/) | 🟢 live |
-| 9 | Transport in animals | Circulation Lab | ⚪ soon |
+| 9 | Transport in animals | [**Circulation Lab**](https://nlcsbiology.com/circulation-lab/) | 🟢 live |
 | 10 | Diseases and immunity | Immunity Lab | ⚪ soon |
 | 11 | Gas exchange in humans | Gas Exchange Lab | ⚪ soon |
 | 12 | Respiration | Respiration Lab | ⚪ soon |
@@ -53,27 +53,34 @@ Chromebook or a school PC.
 ## What is on the page
 
 **The 3D body** — `index.html` — reconstructed from a real MRI scan. Turn it, zoom, and peel
-back skin, skeleton and muscle to reach what lies underneath. 6 MB.
+back skin, skeleton and muscle to reach what lies underneath. 9 MB.
 
 **The flat plate** — `plate.html` — the same nine topics on an anatomical drawing, a few hundred
 kilobytes, for a slow connection or an old device.
+
+![The light version: a flat anatomical plate of the body beside the same labs](docs/img/hub-plate.png)
 
 Left alone, the plate tours the systems by itself, so anyone glancing at the screen sees what
 the body does.
 
 ## For developers
 
-Static files, no build step, no framework.
+Static files, no framework. The one build step is `node tools/stamp.mjs`, before every push.
 
-- **`js/topics.js` is the register** — the only file to edit when a lab is finished. Give the
-  topic a `url`, change `status` to `live`, done. Each entry carries the organ system to light
-  (`sys`) and the organ a label points at (`anchor`).
+- **`js/topics.js` is the topic register.** When a lab is finished, give its topic a `url` and
+  change `status` to `live`. Each entry carries the organ system to light (`sys`) and the organ a
+  label points at (`anchor`). A new lab also needs its row in `labs-shared/labs.json` (its size
+  comes from there), its door on the front door (biology-hub `js/shelves.js`) and a sitemap entry;
+  `docs/BUILD-NOTES.md` has the list.
 - `js/hub.js` reads it and wires the paper side to the specimen. `js/body3d.js` renders the
-  3D body; `plate.html` holds the inlined SVG (`tools/inline-plate.py` puts it there).
+  3D body; `plate.html` holds the plate (`assets/anatomy/body.svg`) inlined.
 - `css/hub.css` is the whole style. `docs/BUILD-NOTES.md` has the detail, and
   `docs/link-back.md` is the recipe for a lab's link back up here.
 
-Bump `version.txt` **and** every `?v=` stamp together — the stamps are the real cache key.
+Before every push, run `node tools/stamp.mjs`. It writes every `?v=` in `index.html` and
+`plate.html`, and `version.txt`, from one value (the stamps are the real cache key), leaving
+`body.glb?v=` alone on purpose; and it copies in `labs-shared/labs.json` and `progress.js`.
+Never bump the stamps by hand.
 
 ## Sources and licences
 
