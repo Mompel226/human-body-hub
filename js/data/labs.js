@@ -70,7 +70,7 @@ window.LABS_REGISTER = {
   "shelves": [
     { "id": "foundations",
       "name": "Foundations",
-      "url": null
+      "url": "https://nlcsbiology.com/foundations-hub/"
     },
     { "id": "human-body",
       "name": "The human body",
