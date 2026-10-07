@@ -9,7 +9,8 @@
 
    A lab keeps, under the key named in the register (NOT always <id>.v2 — the
    Classification Lab uses .v1):
-     { <stationId>: { done:{i:true}, tried:{i:true}, per:{i:n}, one:{i:true}, sig, first } }
+     { <stationId>: { done:{i:true}, tried:{i:true}, per:{i:n}, one:{i:true}, sig, first,
+                      go, g1, best, r:[finished rounds], legacy } }
    and, once anything has reached the teacher's records, <id>.submitted = { at, sent, name }
    (older copies carry { name, form, code, at, sent } from the days of handing in).
 
@@ -48,7 +49,11 @@
       });
       var n = Object.keys(right).length, t = Object.keys(tried).length;
       Object.keys(r.per || {}).forEach(function (k) { out.checks += r.per[k]; });
-      out.checks += Number(r.past) || 0;              /* checks made on earlier goes */
+      out.checks += (Number(r.past) || 0) + (Number(r.legacy) || 0);   /* checks made on earlier goes, not by question */
+      /* every finished round (7 Oct 2026; engine/sync.js): "<letters>.<checks>[*k]", one check count per question in base 36 */
+      (Array.isArray(r.r) ? r.r : []).forEach(function (t) {
+        (String(t || '').replace(/\*\d+$/, '').split('.')[1] || '').split('').forEach(function (ch) { var v = parseInt(ch, 36); if (v > 0) out.checks += v; });
+      });
       out.done += n; out.tried += t;
       if (n || t) out.stations++;
     });
