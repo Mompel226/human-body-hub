@@ -65,6 +65,18 @@ window.LABS_REGISTER = {
       "stations": 12,
       "questions": 115,
       "status": "live"
+    },
+    { "id": "cells-lab",
+      "name": "Cells Lab",
+      "short": "Cells",
+      "topicNo": 2,
+      "topic": "Organisation of the organism",
+      "shelf": "foundations",
+      "url": "https://nlcsbiology.com/cells-lab/",
+      "store": "cells-lab.v1",
+      "stations": 11,
+      "questions": 103,
+      "status": "live"
     }
   ],
   "shelves": [
