@@ -32,7 +32,7 @@ window.TOPICS = [
   { id:'circulation',  no:9,  year:'Y10', side:'l', sys:'circulation',  anchor:'o-heart',
     title:'Transport in animals',   lab:'Circulation Lab',
     blurb:'Double circulation, the heart, blood vessels and what blood carries.',
-    detail:'12 stations · 115 questions',
+    detail:'12 stations · 120 questions',
     status:'live', url:'https://nlcsbiology.com/circulation-lab/' },
 
   { id:'immunity',     no:10, year:'Y10', side:'l', sys:'immunity',     anchor:'o-spleen',
