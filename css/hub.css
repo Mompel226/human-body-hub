@@ -133,12 +133,9 @@ svg[data-focus="digestion"] #o-intestines{transform-box:fill-box;transform-origi
   min-height:0;overflow:auto;padding:clamp(24px,3.4vh,38px) clamp(26px,3.6vw,56px) 20px;
   display:flex;flex-direction:column;gap:clamp(12px,1.8vh,20px)
 }
-.up{
-  display:inline-block;margin-bottom:10px;font-family:var(--mono);font-size:10.5px;font-weight:500;
-  letter-spacing:.14em;text-transform:uppercase;color:var(--i-gas-exchange);
-  border-bottom:1px solid rgba(11,106,140,.35);transition:color .15s,border-color .15s
-}
-.up:hover{color:#08536E;border-bottom-color:#08536E}
+/* the way back (14 Oct 2026, Daniel: pupils missed it): a solid pill in this site's own colours */
+.up{display:inline-flex;align-items:center;flex:none;white-space:nowrap;min-height:34px;margin:0 0 10px;padding:0 16px 0 13px;font:650 14px/1 var(--sans,Inter,system-ui,sans-serif);letter-spacing:0;text-transform:none;color:#fff;background:var(--i-gas-exchange);border:0;border-radius:999px;text-decoration:none;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.up:hover,.up:focus-visible{background:#08536E;color:#fff;text-decoration:none}
 .masthead h1{font-family:var(--serif);font-size:clamp(28px,3.2vw,40px);letter-spacing:-.015em}
 .masthead h1 em{font-style:italic;color:var(--i-gas-exchange)}
 .masthead .eyebrow{margin-top:6px;display:block}
