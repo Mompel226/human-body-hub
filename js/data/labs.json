@@ -62,7 +62,7 @@
       "url": "https://nlcsbiology.com/circulation-lab/",
       "store": "circulation-lab.v1",
       "stations": 12,
-      "questions": 120,
+      "questions": 122,
       "status": "live"
     },
     { "id": "cells-lab",
