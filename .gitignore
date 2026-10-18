@@ -5,3 +5,7 @@ __pycache__/
 tools/model-build/stl/
 tools/model-build/parts.txt
 tools/model-build/composite.txt
+
+# The build and check tools and local settings stay on Daniel's computer, not on GitHub (18 Oct 2026)
+/tools/
+/.claude/

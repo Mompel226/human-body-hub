@@ -65,6 +65,8 @@ the body does.
 
 ## For developers
 
+The `tools/` named here stay on Daniel's computer: they are not in this repository (since 18 Oct 2026).
+
 Static files, no framework. The one build step is `node tools/stamp.mjs`, before every push.
 
 - **`js/topics.js` is the topic register.** When a lab is finished, give its topic a `url` and
