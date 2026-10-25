@@ -74,8 +74,8 @@ window.LABS_REGISTER = {
       "shelf": "foundations",
       "url": "https://nlcsbiology.com/cells-lab/",
       "store": "cells-lab.v1",
-      "stations": 11,
-      "questions": 103,
+      "stations": 12,
+      "questions": 129,
       "status": "live"
     }
   ],
