@@ -65,6 +65,18 @@
       "questions": 122,
       "status": "live"
     },
+    { "id": "immunity-lab",
+      "name": "Immunity Lab",
+      "short": "Immunity",
+      "topicNo": 10,
+      "topic": "Diseases and immunity",
+      "shelf": "human-body",
+      "url": "https://nlcsbiology.com/immunity-lab/",
+      "store": "immunity-lab.v1",
+      "stations": 7,
+      "questions": 59,
+      "status": "live"
+    },
     { "id": "cells-lab",
       "name": "Cells Lab",
       "short": "Cells",

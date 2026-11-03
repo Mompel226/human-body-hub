@@ -38,7 +38,8 @@ window.TOPICS = [
   { id:'immunity',     no:10, year:'Y10', side:'l', sys:'immunity',     anchor:'o-spleen',
     title:'Diseases and immunity',  lab:'Immunity Lab',
     blurb:'Pathogens, transmission, the body’s defences, antibodies and vaccination.',
-    status:'planned', url:null },
+    detail:'7 stations · 59 questions',
+    status:'live', url:'https://nlcsbiology.com/immunity-lab/' },
 
   { id:'gas-exchange', no:11, year:'Y10', side:'l', sys:'gas-exchange', anchor:'o-lungs',
     title:'Gas exchange in humans', lab:'Gas Exchange Lab',
