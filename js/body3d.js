@@ -94,7 +94,10 @@ controls.enableDamping = true; controls.dampingFactor = 0.07;
    specimen (see the loop at the bottom) so nobody can drag themselves into empty space. */
 controls.enablePan = true; controls.screenSpacePanning = true;
 controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
-controls.minDistance = 1.1; controls.maxDistance = 5.5;
+/* 0.3 m from the organ you zoom toward (see "zooming" below): one organ fills the view and still
+   reads as itself; nearer, the model's triangles show and nothing can be told apart. It was 1.1 m
+   from the middle of the body, which kept the whole trunk in view. */
+controls.minDistance = 0.3; controls.maxDistance = 5.5;
 controls.autoRotate = true; controls.autoRotateSpeed = 0.55;
 
 function resize() {
@@ -282,9 +285,10 @@ tgMus.addEventListener('click', () => {
      own lab is lit, so it can never sit in front of the organs underneath. */
   muscles.forEach(m => { m.visible = muscleOn; });
 });
+let spinOn = true;            /* what the Turn button says; the loop at the bottom applies it */
 tgSpin.addEventListener('click', () => {
-  controls.autoRotate = !controls.autoRotate;
-  tgSpin.setAttribute('aria-pressed', controls.autoRotate);
+  spinOn = !spinOn;
+  tgSpin.setAttribute('aria-pressed', spinOn);
 });
 
 /* ---------------- picking: point at the body itself ---------------- */
@@ -315,6 +319,97 @@ renderer.domElement.addEventListener('click', ev => {
   if (t.status === 'live' && t.url) location.href = t.url;
   else toast(t.lab + ' has not been built yet.');
 });
+
+/* ---------------- zooming: toward what you point at ----------------
+   OrbitControls zooms toward the point it turns about, the middle of the body, so a pinch over
+   the kidneys still went into the belly button and nothing off the middle line could be reached
+   (Daniel, 4 Nov 2026). zoomToCursor moves the camera along the line through the pointer, or
+   through the point between two fingers, so what is under them stays under them. Two more
+   things make "close" possible:
+   - At the start of each zoom the turning point moves along the line of sight to the depth of
+     the organ under the pointer. The view does not move, but the camera now slows as it nears
+     THAT organ and stops minDistance from it, and a drag afterwards turns the body about it.
+   - The body stops turning by itself while you are close (CLOSE, in the loop at the bottom),
+     or it would carry the organ out of view; it turns again once you zoom back out. */
+controls.zoomToCursor = true;
+const CLOSE = 2.4;            /* metres from the turning point; the opening view is 3.15 */
+const cv = renderer.domElement;
+
+function seat(x, y) {
+  const r = cv.getBoundingClientRect();
+  ptr.x =  ((x - r.left) / r.width)  * 2 - 1;
+  ptr.y = -((y - r.top)  / r.height) * 2 + 1;
+  ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObjects(organs.filter(o => o.visible), false)[0];
+  if (!hit) return;                       /* empty space: zoom toward the pointer as it is */
+  const ahead = camera.getWorldDirection(new THREE.Vector3());
+  const depth = ahead.dot(hit.point.clone().sub(camera.position));
+  if (depth > controls.minDistance) controls.target.copy(camera.position).addScaledVector(ahead, depth);
+}
+
+/* A wheel, a mouse's or a trackpad's, starts a new zoom after a pause; the steps of one zoom
+   keep the turning point it started with. Its speed is set here, before the controls read it:
+   - A trackpad pinch arrives as a wheel with ctrlKey, its deltaY 100 × ln(how far the fingers
+     parted). The controls zoom by 0.95 per 100, divided again by devicePixelRatio, so on a
+     Retina Mac a whole pinch brought the body about 2 % closer. Now the body grows as the
+     fingers part (fingers twice as far apart, camera twice as close), one step at most 1.5 times.
+   - A mouse wheel keeps the controls' own speed, without the Retina halving; a wheel that counts
+     in lines or pages (Firefox) is turned into pixels first. */
+let lastWheel = 0;
+addEventListener('wheel', e => {          /* on the window, so it runs before the controls */
+  if (e.target !== cv) return;
+  if (e.timeStamp - lastWheel > 250) seat(e.clientX, e.clientY);
+  lastWheel = e.timeStamp;
+  const dpr = (devicePixelRatio | 0) || 1;
+  controls.zoomSpeed = e.ctrlKey
+    ? dpr / -Math.log(0.95) * Math.min(1, 40 / (Math.abs(e.deltaY) || 1))
+    : dpr * ([1, 16, 100][e.deltaMode] || 1);
+}, { capture:true, passive:true });
+/* a finger or a mouse button zooms at the controls' own speed (two fingers follow exactly) */
+addEventListener('pointerdown', () => { controls.zoomSpeed = 1; }, true);
+
+/* Two fingers on a touch screen. OrbitControls takes the point between them from pageX/pageY
+   but measures the canvas with getBoundingClientRect, which leaves out scrolling: on a phone
+   scrolled down the page, the zoom went toward a point that far below the fingers. So touch
+   pointers carry their window position in pageX/pageY too, set here before the controls read
+   them (this listener is on the window, in the capture phase). */
+const fingers = new Map();
+['pointerdown', 'pointermove'].forEach(type => addEventListener(type, e => {
+  if (e.pointerType !== 'touch') return;
+  Object.defineProperty(e, 'pageX', { value: e.clientX });
+  Object.defineProperty(e, 'pageY', { value: e.clientY });
+  if (type === 'pointerdown' && e.target !== cv) return;
+  if (type === 'pointermove' && !fingers.has(e.pointerId)) return;
+  fingers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (type === 'pointerdown' && fingers.size === 2) {
+    const [a, b] = [...fingers.values()];
+    seat((a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+  }
+}, true));
+['pointerup', 'pointercancel'].forEach(type => addEventListener(type, e => fingers.delete(e.pointerId), true));
+
+/* Safari on a Mac sends a trackpad pinch as "gesture" events, where other browsers send a wheel,
+   so there the pinch zoomed the whole page instead of the body. Each step is passed on as the
+   wheel the controls already follow. Not on a touch screen: there the fingers already arrive
+   as pointers (above), and this would zoom twice. */
+if (!navigator.maxTouchPoints) {
+  let last = 1, pinching = false, px = 0, py = 0;
+  cv.addEventListener('pointermove', e => { px = e.clientX; py = e.clientY; });
+  cv.addEventListener('gesturestart', e => { e.preventDefault(); last = 1; pinching = true; });
+  cv.addEventListener('gesturechange', e => {
+    e.preventDefault();
+    const k = e.scale / last; last = e.scale;
+    if (!(k > 0) || !isFinite(k) || k === 1) return;
+    /* the wheel Chrome would send for the same pinch (above) */
+    cv.dispatchEvent(new WheelEvent('wheel', { deltaY: -100 * Math.log(k), ctrlKey:true, bubbles:true,
+      cancelable:true, clientX: e.clientX ?? px, clientY: e.clientY ?? py }));
+  });
+  cv.addEventListener('gestureend', e => { e.preventDefault(); pinching = false; });
+  /* if Safari also sends the pinch as wheels, those would zoom a second time */
+  addEventListener('wheel', e => {
+    if (pinching && e.isTrusted) { e.preventDefault(); e.stopPropagation(); }
+  }, { capture:true, passive:false });
+}
 
 /* ---------------- the idle tour ---------------- */
 const TOURABLE = T.filter(t => t.sys && t.sys !== 'drugs');
@@ -353,6 +448,7 @@ resize();
 const PAN = new THREE.Vector3(0.55, 1.05, 0.55);
 renderer.setAnimationLoop(() => {
   controls.target.clamp(PAN.clone().negate(), PAN);
+  controls.autoRotate = spinOn && camera.position.distanceTo(controls.target) > CLOSE;
   controls.update();
   renderer.render(scene, camera);
 });
