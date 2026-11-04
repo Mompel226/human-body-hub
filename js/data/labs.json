@@ -77,6 +77,18 @@
       "questions": 59,
       "status": "live"
     },
+    { "id": "inheritance-lab",
+      "name": "Inheritance Lab",
+      "short": "Inheritance",
+      "topicNo": 17,
+      "topic": "Inheritance",
+      "shelf": "life-on-earth",
+      "url": "https://nlcsbiology.com/inheritance-lab/",
+      "store": "inheritance-lab.v1",
+      "stations": 14,
+      "questions": 100,
+      "status": "live"
+    },
     { "id": "cells-lab",
       "name": "Cells Lab",
       "short": "Cells",
