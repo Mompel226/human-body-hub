@@ -13,7 +13,7 @@ topic with questions that mark themselves.
 ![IGCSE Biology 0610](https://img.shields.io/badge/IGCSE_Biology-0610-3D7A54)
 ![No sign-up](https://img.shields.io/badge/students-no_sign--up_needed-6FA287)
 
-by **Dr Daniel Mompel Riera** · NLCS Jeju
+by **Dr Daniel Mompel Riera**
 
 </div>
 
@@ -92,7 +92,7 @@ The body is reconstructed from **[BodyParts3D](https://dbarchive.biosciencedbc.j
 Anatomical art from [Servier Medical Art](https://smart.servier.com/), CC BY 4.0. Type: Fraunces,
 IBM Plex Mono and Inter, all open licences.
 
-Made by **Dr Daniel Mompel Riera** · Biology, NLCS Jeju ·
+Made by **Dr Daniel Mompel Riera** ·
 [dmompelriera@nlcsjeju.kr](mailto:dmompelriera@nlcsjeju.kr)
 
 ## Licence
