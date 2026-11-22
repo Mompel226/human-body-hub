@@ -113,6 +113,18 @@
       "questions": 94,
       "status": "live"
     },
+    { "id": "molecules-lab",
+      "name": "Molecules Lab",
+      "short": "Molecules",
+      "topicNo": 4,
+      "topic": "Biological molecules",
+      "shelf": "foundations",
+      "url": "https://nlcsbiology.com/molecules-lab/",
+      "store": "molecules-lab.v1",
+      "stations": 8,
+      "questions": 70,
+      "status": "live"
+    },
     { "id": "gas-exchange-lab",
       "name": "Gas Exchange Lab",
       "short": "Gas exchange",
