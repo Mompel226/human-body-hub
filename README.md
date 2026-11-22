@@ -33,7 +33,7 @@ the page goes back up.
 | 9 | Transport in animals | [**Circulation Lab**](https://nlcsbiology.com/circulation-lab/) | 🟢 live |
 | 10 | Diseases and immunity | Immunity Lab | ⚪ soon |
 | 11 | Gas exchange in humans | Gas Exchange Lab | ⚪ soon |
-| 12 | Respiration | Respiration Lab | ⚪ soon |
+| 12 | Respiration | [**Respiration Lab**](https://nlcsbiology.com/respiration-lab/) | 🟢 live |
 | 13 | Excretion in humans | Excretion Lab | ⚪ soon |
 | 14 | Coordination and response | Coordination Lab | ⚪ soon |
 | 15 | Drugs | Drugs & AMR Lab | ⚪ soon |

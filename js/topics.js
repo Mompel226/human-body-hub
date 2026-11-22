@@ -49,8 +49,9 @@ window.TOPICS = [
 
   { id:'respiration',  no:12, year:'Y10', side:'r', sys:'respiration',  anchor:'o-muscles',
     title:'Respiration',            lab:'Respiration Lab',
-    blurb:'Aerobic and anaerobic respiration in the cell, lactic acid and oxygen debt.',
-    status:'planned', url:null },
+    blurb:'The uses of energy, aerobic and anaerobic respiration in the cell, yeast and temperature, lactic acid and the oxygen debt.',
+    detail:'9 stations · 77 questions',
+    status:'live', url:'https://nlcsbiology.com/respiration-lab/' },
 
   { id:'excretion',    no:13, year:'Y10', side:'r', sys:'excretion',    anchor:'o-urinary',
     title:'Excretion in humans',    lab:'Excretion Lab',
