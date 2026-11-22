@@ -43,8 +43,9 @@ window.TOPICS = [
 
   { id:'gas-exchange', no:11, year:'Y10', side:'l', sys:'gas-exchange', anchor:'o-lungs',
     title:'Gas exchange in humans', lab:'Gas Exchange Lab',
-    blurb:'Lungs, alveoli, the mechanics of ventilation and the effect of exercise.',
-    status:'planned', url:null },
+    blurb:'The breathing system, the alveoli, inspired and expired air, how the ribs and diaphragm move air, and why you breathe faster when you are active.',
+    detail:'8 stations · 60 questions',
+    status:'live', url:'https://nlcsbiology.com/gas-exchange-lab/' },
 
   { id:'respiration',  no:12, year:'Y10', side:'r', sys:'respiration',  anchor:'o-muscles',
     title:'Respiration',            lab:'Respiration Lab',

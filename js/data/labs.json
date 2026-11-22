@@ -100,6 +100,30 @@
       "stations": 12,
       "questions": 131,
       "status": "live"
+    },
+    { "id": "membrane-lab",
+      "name": "Membrane Lab",
+      "short": "In and out of cells",
+      "topicNo": 3,
+      "topic": "Movement into and out of cells",
+      "shelf": "foundations",
+      "url": "https://nlcsbiology.com/membrane-lab/",
+      "store": "membrane-lab.v1",
+      "stations": 11,
+      "questions": 94,
+      "status": "live"
+    },
+    { "id": "gas-exchange-lab",
+      "name": "Gas Exchange Lab",
+      "short": "Gas exchange",
+      "topicNo": 11,
+      "topic": "Gas exchange in humans",
+      "shelf": "human-body",
+      "url": "https://nlcsbiology.com/gas-exchange-lab/",
+      "store": "gas-exchange-lab.v1",
+      "stations": 8,
+      "questions": 60,
+      "status": "live"
     }
   ],
   "shelves": [
