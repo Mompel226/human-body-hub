@@ -134,7 +134,7 @@
       "url": "https://nlcsbiology.com/gas-exchange-lab/",
       "store": "gas-exchange-lab.v1",
       "stations": 8,
-      "questions": 60,
+      "questions": 61,
       "status": "live"
     },
     { "id": "respiration-lab",
@@ -146,7 +146,7 @@
       "url": "https://nlcsbiology.com/respiration-lab/",
       "store": "respiration-lab.v1",
       "stations": 9,
-      "questions": 77,
+      "questions": 79,
       "status": "live"
     }
   ],
