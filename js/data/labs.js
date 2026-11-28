@@ -99,8 +99,8 @@ window.LABS_REGISTER = {
       "url": "https://nlcsbiology.com/variation-lab/",
       "store": "variation-lab.v1",
       "stations": 10,
-      "questions": 55,
-      "status": "build"
+      "questions": 90,
+      "status": "live"
     },
     { "id": "cells-lab",
       "name": "Cells Lab",
